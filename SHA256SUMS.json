@@ -1,0 +1,23 @@
+{
+  ".gitignore": "b7de3d9e8bb991d3190b81321a75e9b92d89ef6b505d6fff4913ab5ee4b54193",
+  "ISOLATION.md": "e02f8c7318cf007c4963f13346c792789e188cf8cd55fe55cc6a5a7c9b8520c5",
+  "README.md": "de80709fac0eb1a46f8625506b0a8de40a97e2d12819911ce6abf043664f6c50",
+  "REPORT.md": "67c0fdf1e32dc155f7dfc678fb81507b7c84acf6415d85b45561da6b024ad688",
+  "TASK.md": "9c709dd110b1d2f851390c2c62064fa36c6633001703f0b9eefedac52f504f8b",
+  "answers.jsonl": "a676a6af02bed7d605a28ec86a9fed2e9ae7aa4a29af444931f76905cdab5200",
+  "core.py": "98343a239b1089047de2e7d35f944f307a0bb4a118b11e6096d6c0e76594fd22",
+  "data/test_predictions.jsonl": "b77b1fc7e813656e1b42ebc02a17db3af14bf881b2a3707972f16c99e6fcf3f4",
+  "data/train_labels.jsonl": "7e58735b5a3a100af624ce004ad1ea2576e730fabd0e85c78d0dcd7d481be907",
+  "data/train_predictions.jsonl": "7c23de7e8be44a762aef387e57232dde701d12eddad54d4f252c844d848caaa3",
+  "evaluate.py": "6a77df21cc362025c0d6454195d15ab68b3268ca463678c8c7433a37a151e0a6",
+  "experiments/previous_policy_metrics.json": "7dd4694ec2ebbc4a11ff91c4042c17e0a01e8a1225a57687185c63acfc248dd1",
+  "metrics.json": "718542bdf371c6c7ec80044ede34c0d2eed96119d213795accc59917c884fe33",
+  "model.json": "12e0d6632a7bc7d670e46e723b843585bda4e18830dc6bb6288656e0154da517",
+  "postprocess.py": "d1ac40bd1bdcacbf69b9b45d823f7d38d70df0d424de69a6dee70aa3146d5ff0",
+  "reference/SOURCE.txt": "328457621c1d2b6cef3eb5fae4b4257519b8e16a9543c691febf7b3801ac2aad",
+  "reference/subdivisions.csv": "fa7999fab074d824ab89d26cef2ff4576f3cdf1b527eb38df3bc96322709eec4",
+  "run-isolated.sh": "03a69d38d661ce7cc87d027cb4241c1fa3769864520357d67b37bea34dab3af2",
+  "tests.py": "64b844d45f6a66e336a8b26674e7bb18f9f7f2cf0568d066952a451224f72e09",
+  "train.py": "d6b7cb65a8f553c60566da0cf0a8ca429a2ad49d07a58f5dbc55db7f1fee96db",
+  "verification.json": "026827c60cb01584192d985ac37ea9f054da7ce3a4034fa58854a6dd8f4acc7f"
+}

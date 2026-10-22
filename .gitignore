@@ -1,0 +1,12 @@
+__pycache__/
+.tmp/
+runtime.sb
+data/
+train_answers.jsonl
+answers.reproduced.jsonl
+verification.json
+explore.py
+diagnostics.py
+validate.py
+isolation.sb
+check_isolation.py
