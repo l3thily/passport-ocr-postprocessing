@@ -280,6 +280,6 @@
       "fit_accepted": 0
     }
   },
-  "seconds": 13.731,
+  "seconds": 14.16,
   "validation_limitation": "Exploratory data analysis preceded cross-validation; this is internal validation, not an untouched external test."
 }

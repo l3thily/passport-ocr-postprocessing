@@ -77,6 +77,7 @@ def main():
     assert results['train_answers.jsonl']['wrong_fields']==0
     assert results['validation_answers.jsonl']['wrong_fields']==0
     checks={}
+    (ROOT/'.tmp').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='verification-',dir=ROOT/'.tmp') as temp:
         temp=Path(temp)
         start=time.perf_counter()

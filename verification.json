@@ -17,7 +17,7 @@
     "wrong_fields": null,
     "invalid_accepted": null
   },
-  "inference_seconds": 1.1024,
+  "inference_seconds": 1.1065,
   "cli_checks": {
     "byte_identical_inference": true,
     "duplicate_atomic_failure": true,

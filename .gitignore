@@ -1,7 +1,6 @@
 __pycache__/
 .tmp/
 runtime.sb
-data/
 train_answers.jsonl
 answers.reproduced.jsonl
 audit_preview.jsonl
@@ -13,3 +12,4 @@ diagnostics.py
 validate.py
 isolation.sb
 check_isolation.py
+__submission_check__/
