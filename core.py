@@ -2,6 +2,7 @@
 import csv
 import datetime as dt
 import json
+import math
 import re
 import statistics
 from collections import defaultdict
@@ -13,7 +14,61 @@ FIELDS = ['Last_name_ru', 'First_name_ru', 'Middle_name_ru', 'Sex_ru',
 AS_OF = dt.date(2026, 10, 1)
 TRANSLIT = dict(zip('АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
                     ['A','B','V','G','D','E','2','J','Z','I','Q','K','L','M','N','O','P','R','S','T','U','F','H','C','3','4','W','X','Y','9','6','7','8']))
-DIGITS = str.maketrans({'О':'0','O':'0','З':'3','Ч':'4','б':'6','Б':'6','В':'8','B':'8','S':'5','I':'1','l':'1'})
+DIGITS = str.maketrans({'О':'0','O':'0','З':'3','Ч':'4','Б':'6','В':'8','B':'8','S':'5','I':'1','L':'1'})
+
+def finite_number(value):
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+def valid_box(box):
+    return (isinstance(box, list) and len(box) == 4
+            and all(finite_number(x) for x in box)
+            and box[2] > 0 and box[3] > 0)
+
+def valid_line(line, require_box):
+    if not isinstance(line, dict):
+        return False
+    value, probs = line.get('text'), line.get('char_conf')
+    return (isinstance(value, str) and bool(value.strip())
+            and isinstance(probs, list) and len(probs) == len(value)
+            and all(finite_number(p) and 0 <= p <= 1 for p in probs)
+            and (not require_box or valid_box(line.get('box'))))
+
+def valid_record(record):
+    """Fail closed on missing, misaligned or non-finite model outputs."""
+    if not isinstance(record, dict):
+        return False
+    viz, quality = record.get('viz'), record.get('quality')
+    if not isinstance(viz, dict) or not isinstance(quality, dict):
+        return False
+    if not all(k in viz for k in FIELDS):
+        return False
+    if not all(finite_number(quality.get(k)) for k in ['doc_px','sharpness','glare']):
+        return False
+    if quality['doc_px'] <= 0 or quality['sharpness'] < 0 or not 0 <= quality['glare'] <= 1:
+        return False
+    for field in viz.values():
+        if field is None:
+            continue
+        if not isinstance(field, dict) or not valid_box(field.get('box')):
+            return False
+        conf = field.get('conf')
+        if not finite_number(conf) or not 0 <= conf <= 1:
+            return False
+        ls = field.get('lines')
+        if not isinstance(ls, list) or not ls or not all(valid_line(line, True) for line in ls):
+            return False
+    mrz = record.get('mrz')
+    if mrz is not None:
+        if not isinstance(mrz, dict) or not isinstance(mrz.get('lines'), list):
+            return False
+        if not all(valid_line(line, False) for line in mrz['lines']):
+            return False
+    return True
 
 def norm(value):
     return ' '.join(str(value or '').split()).upper()
@@ -74,10 +129,13 @@ def valid_dates(fields, as_of=AS_OF):
         if issue<birthday and as_of>birthday+dt.timedelta(days=90):return False
     return True
 
-def line1(fields):
+def name_payload(fields):
     name=translit(fields['Last_name_ru'])+'<<'+translit(fields['First_name_ru'])
     if fields['Middle_name_ru']:name+='<'+translit(fields['Middle_name_ru'])
-    return ('PNRUS'+name).ljust(44,'<')[:44]
+    return 'PNRUS'+name
+
+def line1(fields):
+    return name_payload(fields).ljust(44,'<')[:44]
 
 def line2(fields):
     num=re.sub(r'\s','',fields['Licence_number'])
@@ -116,13 +174,18 @@ def normalize_field(key,s):
     s=norm(s)
     if key in ['Birth_date','Issue_date']:
         s=s.translate(DIGITS)
+        if not re.fullmatch(r'[0-9 .-]+',s):return s
         digits=re.sub(r'\D','',s)
         if len(digits)==8:s=digits[:2]+'.'+digits[2:4]+'.'+digits[4:]
     elif key=='Issue_organisation_code':
-        digits=re.sub(r'\D','',s.translate(DIGITS))
+        s=s.translate(DIGITS)
+        if not re.fullmatch(r'[0-9 -]+',s):return s
+        digits=re.sub(r'\D','',s)
         if len(digits)==6:s=digits[:3]+'-'+digits[3:]
     elif key=='Licence_number':
-        digits=re.sub(r'\D','',s.translate(DIGITS))
+        s=s.translate(DIGITS)
+        if not re.fullmatch(r'[0-9 -]+',s):return s
+        digits=re.sub(r'\D','',s)
         if len(digits)==10:s=digits[:2]+' '+digits[2:4]+' '+digits[4:]
     # Keep textual spelling (including Latin names) verbatim. A homoglyph
     # substitution can corrupt a legitimate foreign place name.
@@ -132,7 +195,15 @@ class Processor:
     def __init__(self, root, model=None):
         self.root=Path(root)
         self.model=model if model is not None else json.loads((self.root/'model.json').read_text())
-        self.org_phrases=set(self.model.get('org_phrases',[]))
+        if model is None:
+            policies=self.model.get('policies',{})
+            if self.model.get('schema_version')!=1 or set(policies)!={'web','mobile','mobile_v2'}:
+                raise ValueError('model must contain a complete acceptance policy')
+            for policy in policies.values():
+                if (not finite_number(policy.get('place_threshold'))
+                        or not 0<=policy['place_threshold']<=1
+                        or not finite_number(policy.get('risk_cutoff'))):
+                    raise ValueError('invalid acceptance policy')
         self.org_by_code={k:set(v) for k,v in self.model.get('org_by_code',{}).items()}
         self.orgs=defaultdict(set)
         with (self.root/'reference/subdivisions.csv').open(encoding='utf-8-sig') as f:
@@ -142,7 +213,7 @@ class Processor:
         # The reference uses different grammatical forms and punctuation. Its
         # canonical strings must never replace verbatim passport wording.
         names=self.org_by_code.get(code,set())
-        if value in self.org_phrases:return value,'exact'
+        if value in names:return value,'exact_for_code'
         # Never invent an agency based on code alone: preserve >=95% of OCR text.
         candidates=[]
         for target in names:
@@ -156,8 +227,9 @@ class Processor:
 
     def process(self,record,threshold=None):
         threshold=threshold if threshold is not None else self.model.get('place_threshold',.99)
-        fields={k:normalize_field(k,text(record.get('viz',{}).get(k))) for k in FIELDS}
         def reject(reason):return {'doc_id':record['doc_id'],'decision':'reject'},reason
+        if not valid_record(record):return reject('malformed_record')
+        fields={k:normalize_field(k,text(record.get('viz',{}).get(k))) for k in FIELDS}
         viz=record.get('viz',{})
         if record.get('source') not in ['web','mobile','mobile_v2']:return reject('unknown_source')
         q=record.get('quality',{})
@@ -173,6 +245,11 @@ class Processor:
         if not valid_dates(fields) or parse_date(fields['Birth_date'])<anniversary(AS_OF,-120):return reject('invalid_dates_or_expired')
         mrz=mrz_lines(record)
         if not mrz:return reject('mrz_missing_or_invalid')
+        # A clipped name line cannot corroborate the unseen suffix or prove
+        # that a missing patronymic is truly absent.
+        payload_length=len(name_payload(fields))
+        if payload_length>=44 or (not fields['Middle_name_ru'] and payload_length>=43):
+            return reject('name_evidence_truncated')
         if line1(fields)!=mrz[0] or line2(fields)!=mrz[1]:return reject('mrz_disagreement')
         org,method=self.issuer(fields['Issue_organisation_code'],fields['Issue_organization_ru'],viz['Issue_organization_ru'])
         if org is None:return reject(method)

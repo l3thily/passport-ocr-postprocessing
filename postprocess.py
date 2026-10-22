@@ -20,6 +20,7 @@ def main():
     try:
         with os.fdopen(fd,'w',encoding='utf-8') as out:
             for record in load_jsonl(args.input):
+                if not isinstance(record,dict):raise ValueError('each JSONL record must be an object')
                 doc_id=record.get('doc_id')
                 if not isinstance(doc_id,str) or not doc_id or doc_id in seen:raise ValueError('missing or duplicate doc_id')
                 seen.add(doc_id)

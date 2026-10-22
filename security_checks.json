@@ -1,0 +1,15 @@
+{
+  "outside_read": true,
+  "outside_write": true,
+  "downloads_read": true,
+  "home_directory_read": true,
+  "system_configuration_read": true,
+  "homebrew_configuration_read": true,
+  "symlink_escape": true,
+  "external_tcp": true,
+  "localhost_tcp": true,
+  "unix_socket": true,
+  "child_inherits_denial": true,
+  "clean_environment": true,
+  "isolated_python_no_site": true
+}

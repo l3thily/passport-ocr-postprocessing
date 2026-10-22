@@ -5,6 +5,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import collections
 import hashlib
 import json
+import math
 import time
 from core import Processor, load_jsonl, norm, tokens, valid_dates, confidence, FIELDS
 
@@ -17,7 +18,6 @@ def make_model(labels):
     org_by_code=collections.defaultdict(set)
     for g in labels:org_by_code[g['Issue_organisation_code']].add(norm(g['Issue_organization_ru']))
     return {'schema_version':1,'place_threshold':.99,
-            'org_phrases':sorted({norm(g['Issue_organization_ru']) for g in labels}),
             'org_by_code':{k:sorted(v) for k,v in sorted(org_by_code.items())}}
 
 def wrong(answer,label):
@@ -38,8 +38,9 @@ def fit(records,labels):
             if source=='web' and threshold<.9985:continue
             rows=[x for x in candidates if x[0]==source and x[1]>=threshold]
             good=[x[2] for x in rows if not x[3]];bad=[x[2] for x in rows if x[3]]
-            cutoff=.8*min(bad) if bad else max(good,default=-1)+1e-9
+            cutoff=math.nextafter(.8*min(bad),-math.inf) if bad else max(good,default=-1)+1e-9
             cutoff=min(cutoff,{'web':.15,'mobile':2.0,'mobile_v2':.8}[source])
+            assert not any(x<=cutoff for x in bad), 'fitted cutoff admits a known error'
             count=sum(x<=cutoff for x in good)
             options.append((count,-threshold,cutoff))
         count,negthreshold,cutoff=max(options)
@@ -69,13 +70,19 @@ def main():
     records=list(load_jsonl(ROOT/'data/train_predictions.jsonl'))
     labels={r['doc_id']:r['fields'] for r in load_jsonl(ROOT/'data/train_labels.jsonl')}
     folds=[]
+    validation_answers={}
     for fold in range(5):
         training=[r for r in records if bucket(r['doc_id'])!=fold]
         heldout=[r for r in records if bucket(r['doc_id'])==fold]
         model=fit(training,labels)
-        metrics=evaluate(heldout,labels,Processor(ROOT,model))
+        processor=Processor(ROOT,model)
+        metrics=evaluate(heldout,labels,processor)
+        for record in heldout:
+            assert record['doc_id'] not in validation_answers
+            validation_answers[record['doc_id']]=processor.process(record)[0]
         folds.append(metrics)
         print('FOLD',fold,json.dumps({'policies':model['policies'],'metrics':metrics},ensure_ascii=False))
+    (ROOT/'validation_answers.jsonl').write_text(''.join(json.dumps(validation_answers[r['doc_id']],ensure_ascii=False)+'\n' for r in records))
     model=fit(records,labels)
     (ROOT/'model.json').write_text(json.dumps(model,ensure_ascii=False,indent=2)+'\n')
     p=Processor(ROOT,model)

@@ -3,6 +3,9 @@ import sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import copy
+import json
+import math
+import tempfile
 import datetime as dt
 import unittest
 from core import *
@@ -69,5 +72,69 @@ class Rules(unittest.TestCase):
     def test_unknown_source(self):
         r=self.fixture();r['source']='unseen_scanner'
         self.assertEqual(Processor('.').process(r)[1],'unknown_source')
+
+    def test_nan_confidence_is_rejected(self):
+        r=self.fixture();r['viz']['Last_name_ru']['conf']=float('nan')
+        self.assertEqual(Processor('.').process(r)[1],'malformed_record')
+
+    def test_invalid_character_probabilities(self):
+        for value in [float('nan'),float('inf'),-0.1,1.1,True,'1']:
+            with self.subTest(value=value):
+                r=self.fixture();r['viz']['First_name_ru']['lines'][0]['char_conf'][0]=value
+                self.assertEqual(Processor('.').process(r)[1],'malformed_record')
+
+    def test_missing_name_and_mrz_confidences(self):
+        for zone in ['viz','mrz']:
+            r=self.fixture()
+            line=r['viz']['Last_name_ru']['lines'][0] if zone=='viz' else r['mrz']['lines'][0]
+            line['char_conf']=[]
+            self.assertEqual(Processor('.').process(r)[1],'malformed_record')
+
+    def test_bad_shapes_and_quality(self):
+        for mutation in ['quality_nan','missing_viz','line_not_object','zero_height']:
+            r=self.fixture()
+            if mutation=='quality_nan':r['quality']['glare']=float('nan')
+            if mutation=='missing_viz':r['viz']=None
+            if mutation=='line_not_object':r['viz']['Last_name_ru']['lines']=['text']
+            if mutation=='zero_height':r['viz']['Last_name_ru']['box'][3]=0
+            self.assertEqual(Processor('.').process(r)[1],'malformed_record')
+
+    def test_known_vector_not_generated_by_parser(self):
+        f=next(load_jsonl('data/train_labels.jsonl'))['fields']
+        self.assertEqual(line1(f),'PNRUSZAINTINOV<<ZAKERIQ<NAZIFULOVI3<<<<<<<<<')
+        self.assertEqual(line2(f),'6122839687RUS1006102M<<<<<<<4250911620004<28')
+        self.assertEqual(checkdigit('612283968'),'7')
+        self.assertEqual(translit('ЁЙЧШЩЪЬЭЮЯ'),'2Q34WX9678')
+
+    def test_truncated_name_is_not_confirmed(self):
+        r=self.fixture();name='А'*40
+        r['viz']['Last_name_ru']['lines'][0]['text']=name
+        r['viz']['Last_name_ru']['lines'][0]['char_conf']=[.999]*len(name)
+        f={k:text(v) for k,v in r['viz'].items()}
+        r['mrz']['lines'][0]['text']=line1(f)
+        self.assertEqual(Processor('.').process(r)[1],'name_evidence_truncated')
+
+    def test_agency_exact_match_is_scoped_to_code(self):
+        # A known agency under a different code must not bypass confidence.
+        p=Processor('.',{'org_by_code':{'111-111':['ДРУГОЕ ВЕДОМСТВО']}})
+        r=self.fixture();field=r['viz']['Issue_organization_ru']
+        field['lines'][0]['char_conf']=[.5]*len(field['lines'][0]['text'])
+        self.assertIsNone(p.issuer('620-004','ДРУГОЕ ВЕДОМСТВО',field)[0])
+
+    def test_unknown_letters_not_silently_removed_from_numbers(self):
+        self.assertNotEqual(normalize_field('Licence_number','61 24 283968XYZ'),'61 24 283968')
+        self.assertNotEqual(normalize_field('Birth_date','10.06.2010XYZ'),'10.06.2010')
+        self.assertEqual(normalize_field('Licence_number','61-24-283968'),'61 24 283968')
+
+    def test_incomplete_model_fails_closed(self):
+        with tempfile.TemporaryDirectory(dir='.') as tmp:
+            Path(tmp,'model.json').write_text('{"schema_version":1}')
+            with self.assertRaises(ValueError):Processor(tmp)
+
+    def test_invalid_model_probability_fails_closed(self):
+        with tempfile.TemporaryDirectory(dir='.') as tmp:
+            model={'schema_version':1,'policies':{s:{'place_threshold':float('nan'),'risk_cutoff':1} for s in ['web','mobile','mobile_v2']}}
+            Path(tmp,'model.json').write_text(json.dumps(model))
+            with self.assertRaises(ValueError):Processor(tmp)
 
 if __name__=='__main__':unittest.main()

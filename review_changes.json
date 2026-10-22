@@ -1,0 +1,73 @@
+{
+  "regression_probes": {
+    "nan_field_conf": {
+      "before": "accept",
+      "after": "reject",
+      "reason": "malformed_record"
+    },
+    "missing_name_conf": {
+      "before": "accept",
+      "after": "reject",
+      "reason": "malformed_record"
+    },
+    "missing_mrz_conf": {
+      "before": "accept",
+      "after": "reject",
+      "reason": "malformed_record"
+    },
+    "numeric_garbage": {
+      "before": "accept",
+      "after": "reject",
+      "reason": "number_format"
+    },
+    "truncated_name": {
+      "before": "accept",
+      "after": "reject",
+      "reason": "name_evidence_truncated"
+    }
+  },
+  "test_decision_changes": [
+    {
+      "doc_id": "te_00369",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    },
+    {
+      "doc_id": "te_00488",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    },
+    {
+      "doc_id": "te_00509",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    },
+    {
+      "doc_id": "te_00773",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    },
+    {
+      "doc_id": "te_01324",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    },
+    {
+      "doc_id": "te_01430",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    },
+    {
+      "doc_id": "te_01617",
+      "before": "accept",
+      "after": "reject",
+      "reason": "issuer_ambiguous"
+    }
+  ]
+}

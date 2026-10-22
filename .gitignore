@@ -4,7 +4,10 @@ runtime.sb
 data/
 train_answers.jsonl
 answers.reproduced.jsonl
-verification.json
+audit_preview.jsonl
+legacy_core_for_audit.py
+write_audit_docs.py
+validation_answers.jsonl
 explore.py
 diagnostics.py
 validate.py
