@@ -1,23 +1,23 @@
 {
   "train_answers.jsonl": {
     "rows": 3000,
-    "accepted": 158,
-    "wrong_fields": 0,
+    "accepted": 1645,
+    "wrong_fields": 12,
     "invalid_accepted": 0
   },
   "validation_answers.jsonl": {
     "rows": 3000,
-    "accepted": 105,
-    "wrong_fields": 0,
+    "accepted": 1512,
+    "wrong_fields": 11,
     "invalid_accepted": 0
   },
   "answers.jsonl": {
     "rows": 2000,
-    "accepted": 79,
+    "accepted": 1001,
     "wrong_fields": null,
     "invalid_accepted": null
   },
-  "inference_seconds": 1.1065,
+  "inference_seconds": 0.7647,
   "cli_checks": {
     "byte_identical_inference": true,
     "duplicate_atomic_failure": true,
@@ -26,15 +26,15 @@
     "inplace_guard": true,
     "inference_without_training_files": true
   },
-  "answers_sha256": "e2fba4956637a79256c13d861850e29e56a75a63d814b5cc7fe8f7e16c5299b5",
+  "answers_sha256": "66b5d5f0ef2ef8d929a0de42e3b6790ed6602d19dfba3cf397b370fd57a0fe98",
   "schema_valid_on_all_2000_rows": true,
-  "unit_tests_passed": 19,
+  "unit_tests_passed": 28,
   "source_sha256": {
-    "core.py": "808e3a92c0c42d59f6d59e533f7ebc7f3d00530520b9c030cf2347392e90d83d",
+    "core.py": "e719c589dbc312334ac33a5cab0af911fa392c7a6438d8729834d750978c0765",
     "postprocess.py": "2a19b7ede944751f44b48ec7dce7a3db4e53fe34e7f0d73409749b067d740418",
-    "train.py": "62c5ae39c50a22fe21ae6d3021a6334961d3855bd4b026e0b7377051ec1ec61d",
-    "tests.py": "7fbddde286b2d18a0d2693fab976045914dea8faec2443f9118ffc1ebe71077e",
-    "model.json": "77c16ee52247e8ee19670f80e221ea7a2cf77d8191d95efab8f9fe3b5b150f81",
+    "train.py": "3c9d36cc7f824db115c5c505bec3ae8af1d548d7c6dcd8a0aa0e730702b4b991",
+    "tests.py": "a31d98f3a7c4d7ce5a39d0752f451c8862368484dba7e9dcae9328eac4520d4a",
+    "model.json": "8c3f70d50b861423a096c7b97d250d4eedb6163c1eed8023505f2e0353adb1f1",
     "run-isolated.sh": "ebea2ad9856d5dc1fcbc050f881133b4d9d116cc7340c77123563b8dfd9f0124"
   },
   "security_checks": {

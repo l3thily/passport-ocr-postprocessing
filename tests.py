@@ -42,19 +42,70 @@ class Rules(unittest.TestCase):
         return r
 
     def test_valid_document(self):
-        r=self.fixture();self.assertIsNotNone(mrz_lines(r))
-        self.assertEqual(Processor('.').process(r)[0]['decision'],'accept')
+        r=self.fixture()
+        self.assertEqual(Processor('.').process(r),({'doc_id':'fixture','decision':'accept','fields':self.labels()},'accept'))
 
-    def test_checksum_tampering(self):
+    def labels(self):
+        return dict(next(load_jsonl('data/train_labels.jsonl'))['fields'])
+
+    def test_checksum_tampering_without_visual_support(self):
         r=self.fixture();s=r['mrz']['lines'][1]['text']
         r['mrz']['lines'][1]['text']=str((int(s[0])+1)%10)+s[1:]
-        self.assertIsNone(mrz_lines(r))
-        self.assertEqual(Processor('.').process(r)[0]['decision'],'reject')
+        line=r['viz']['Licence_number']['lines'][0];line['text']='7'+line['text'][1:]
+        self.assertEqual(Processor('.').process(r)[1],'mrz_unverified')
 
-    def test_name_disagreement(self):
+    def test_failed_segment_restored_only_when_check_digits_agree(self):
+        r=self.fixture();s=r['mrz']['lines'][1]['text']
+        r['mrz']['lines'][1]['text']=str((int(s[0])+1)%10)+s[1:]
+        answer,reason=Processor('.').process(r)
+        self.assertEqual(reason,'accept');self.assertEqual(answer['fields'],self.labels())
+
+    def test_mrz_constants_are_restored(self):
+        r=self.fixture();s=r['mrz']['lines'][1]['text']
+        r['mrz']['lines'][1]['text']=s[:10]+'RVS'+s[13:21]+'<<K<<<<'+s[28:]
+        self.assertEqual(Processor('.').process(r)[1],'accept')
+
+    def test_verified_mrz_overrides_visual_dates(self):
+        r=self.fixture();line=r['viz']['Birth_date']['lines'][0]
+        line['text']='10.06.2016'
+        answer,reason=Processor('.').process(r)
+        self.assertEqual(reason,'accept');self.assertEqual(answer['fields']['Birth_date'],'10.06.2010')
+
+    def test_confident_name_disagreement(self):
         r=self.fixture();s=r['viz']['First_name_ru']['lines'][0]['text']
         r['viz']['First_name_ru']['lines'][0]['text']='А'+s[1:]
-        self.assertEqual(Processor('.').process(r)[1],'mrz_disagreement')
+        self.assertEqual(Processor('.').process(r)[1],'name_disagreement')
+
+    def test_doubtful_visual_letter_is_overruled_by_mrz(self):
+        r=self.fixture();line=r['viz']['First_name_ru']['lines'][0]
+        line['text']='А'+line['text'][1:];line['char_conf'][0]=.4
+        answer,reason=Processor('.').process(r)
+        self.assertEqual(reason,'accept');self.assertEqual(answer['fields']['First_name_ru'],self.labels()['First_name_ru'])
+
+    def test_doubtful_mrz_letter_is_overruled_by_visual_zone(self):
+        r=self.fixture();line=r['mrz']['lines'][0]
+        line['text']=line['text'][:6]+'X'+line['text'][7:];line['char_conf'][6]=.4
+        self.assertEqual(Processor('.').process(r)[1],'accept')
+        line['char_conf'][6]=.999
+        self.assertEqual(Processor('.').process(r)[1],'name_disagreement')
+
+    def test_low_confidence_place_and_issuer(self):
+        for key in ['Birth_place_ru','Issue_organization_ru']:
+            r=self.fixture();r['viz'][key]['lines'][0]['char_conf'][3]=.9
+            self.assertEqual(Processor('.',self.model(issuers={})).process(r)[1],'low_confidence_'+key)
+
+    def test_mobile_v2_requires_saturated_confidence(self):
+        r=self.fixture();r['source']='mobile_v2'
+        self.assertEqual(Processor('.').process(r)[1],'low_confidence_Birth_place_ru')
+
+    def test_grace_period_is_not_accepted(self):
+        f={'Birth_date':'10.07.2006','Issue_date':'10.02.2021'}
+        self.assertTrue(valid_dates(f));self.assertTrue(replacement_pending(f))
+        self.assertFalse(replacement_pending({'Birth_date':'10.07.2006','Issue_date':'11.07.2026'}))
+
+    def model(self,**changes):
+        m={'schema_version':2,'policies':{s:{'min_conf':.95} for s in SOURCES},'names':{'trusted':.99,'doubtful':.9},'issuers':{}}
+        m.update(changes);return m
 
     def test_missing_rows(self):
         v={'box':[0,0,500,60],'conf':1,'lines':[{'box':[0,30,400,30],'text':'tail','char_conf':[1]*4}]}
@@ -100,7 +151,7 @@ class Rules(unittest.TestCase):
             self.assertEqual(Processor('.').process(r)[1],'malformed_record')
 
     def test_known_vector_not_generated_by_parser(self):
-        f=next(load_jsonl('data/train_labels.jsonl'))['fields']
+        f=self.labels()
         self.assertEqual(line1(f),'PNRUSZAINTINOV<<ZAKERIQ<NAZIFULOVI3<<<<<<<<<')
         self.assertEqual(line2(f),'6122839687RUS1006102M<<<<<<<4250911620004<28')
         self.assertEqual(checkdigit('612283968'),'7')
@@ -112,14 +163,21 @@ class Rules(unittest.TestCase):
         r['viz']['Last_name_ru']['lines'][0]['char_conf']=[.999]*len(name)
         f={k:text(v) for k,v in r['viz'].items()}
         r['mrz']['lines'][0]['text']=line1(f)
-        self.assertEqual(Processor('.').process(r)[1],'name_evidence_truncated')
+        self.assertEqual(Processor('.').process(r)[1],'mrz_names_unreadable')
 
-    def test_agency_exact_match_is_scoped_to_code(self):
-        # A known agency under a different code must not bypass confidence.
-        p=Processor('.',{'org_by_code':{'111-111':['ДРУГОЕ ВЕДОМСТВО']}})
-        r=self.fixture();field=r['viz']['Issue_organization_ru']
-        field['lines'][0]['char_conf']=[.5]*len(field['lines'][0]['text'])
-        self.assertIsNone(p.issuer('620-004','ДРУГОЕ ВЕДОМСТВО',field)[0])
+    def test_known_issuer_is_scoped_to_code(self):
+        r=self.fixture();field=r['viz']['Issue_organization_ru'];line=field['lines'][0]
+        line['char_conf']=[.5]*len(line['text'])
+        org=self.labels()['Issue_organization_ru']
+        self.assertEqual(Processor('.',self.model(issuers={'111-111':[org]})).process(r)[1],'low_confidence_Issue_organization_ru')
+        self.assertEqual(Processor('.',self.model(issuers={'620-004':[org]})).process(r)[1],'accept')
+
+    def test_known_issuer_corrects_only_doubtful_letters(self):
+        p=Processor('.',self.model(issuers={'620-004':['ОВД АБВ']}))
+        field={'box':[0,0,100,30],'conf':.9,'lines':[{'box':[0,0,100,30],'text':'ОВД АБГ','char_conf':[.99]*6+[.5]}]}
+        self.assertEqual(p.known_issuer('620-004',field),'ОВД АБВ')
+        field['lines'][0]['char_conf']=[.99]*7
+        self.assertIsNone(p.known_issuer('620-004',field))
 
     def test_unknown_letters_not_silently_removed_from_numbers(self):
         self.assertNotEqual(normalize_field('Licence_number','61 24 283968XYZ'),'61 24 283968')
@@ -128,13 +186,11 @@ class Rules(unittest.TestCase):
 
     def test_incomplete_model_fails_closed(self):
         with tempfile.TemporaryDirectory(dir='.') as tmp:
-            Path(tmp,'model.json').write_text('{"schema_version":1}')
+            Path(tmp,'model.json').write_text('{"schema_version":2}')
             with self.assertRaises(ValueError):Processor(tmp)
 
     def test_invalid_model_probability_fails_closed(self):
-        with tempfile.TemporaryDirectory(dir='.') as tmp:
-            model={'schema_version':1,'policies':{s:{'place_threshold':float('nan'),'risk_cutoff':1} for s in ['web','mobile','mobile_v2']}}
-            Path(tmp,'model.json').write_text(json.dumps(model))
-            with self.assertRaises(ValueError):Processor(tmp)
+        with self.assertRaises(ValueError):
+            Processor('.',self.model(policies={s:{'min_conf':float('nan')} for s in SOURCES}))
 
 if __name__=='__main__':unittest.main()

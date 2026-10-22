@@ -1,0 +1,285 @@
+{
+  "folds": [
+    {
+      "total": 614,
+      "accept": 19,
+      "correct": 19,
+      "wrong_fields": 0,
+      "invalid_accept": 0,
+      "reasons": {
+        "issuer_ambiguous": 140,
+        "place_confidence": 73,
+        "image_quality": 7,
+        "mrz_disagreement": 63,
+        "missing_or_incomplete_field": 62,
+        "risk_cutoff": 34,
+        "number_format": 7,
+        "source_place_confidence": 88,
+        "mrz_missing_or_invalid": 79,
+        "name_evidence_truncated": 5,
+        "accept": 19,
+        "invalid_dates_or_expired": 31,
+        "code_format": 1,
+        "sex_format": 5
+      },
+      "by_source": {
+        "web": {
+          "total": 358,
+          "accept": 2,
+          "bad": 0
+        },
+        "mobile": {
+          "total": 194,
+          "accept": 17,
+          "bad": 0
+        },
+        "mobile_v2": {
+          "total": 62,
+          "accept": 0,
+          "bad": 0
+        }
+      }
+    },
+    {
+      "total": 624,
+      "accept": 28,
+      "correct": 28,
+      "wrong_fields": 0,
+      "invalid_accept": 0,
+      "reasons": {
+        "missing_or_incomplete_field": 68,
+        "invalid_dates_or_expired": 32,
+        "issuer_ambiguous": 137,
+        "place_confidence": 75,
+        "mrz_missing_or_invalid": 77,
+        "mrz_disagreement": 69,
+        "source_place_confidence": 89,
+        "accept": 28,
+        "risk_cutoff": 29,
+        "sex_format": 3,
+        "image_quality": 7,
+        "name_evidence_truncated": 2,
+        "number_format": 5,
+        "code_format": 2,
+        "name_format": 1
+      },
+      "by_source": {
+        "mobile_v2": {
+          "total": 51,
+          "accept": 0,
+          "bad": 0
+        },
+        "mobile": {
+          "total": 245,
+          "accept": 28,
+          "bad": 0
+        },
+        "web": {
+          "total": 328,
+          "accept": 0,
+          "bad": 0
+        }
+      }
+    },
+    {
+      "total": 607,
+      "accept": 18,
+      "correct": 18,
+      "wrong_fields": 0,
+      "invalid_accept": 0,
+      "reasons": {
+        "mrz_disagreement": 64,
+        "invalid_dates_or_expired": 36,
+        "issuer_ambiguous": 126,
+        "missing_or_incomplete_field": 62,
+        "mrz_missing_or_invalid": 84,
+        "place_confidence": 72,
+        "source_place_confidence": 83,
+        "image_quality": 8,
+        "risk_cutoff": 32,
+        "accept": 18,
+        "name_evidence_truncated": 7,
+        "name_format": 2,
+        "number_format": 8,
+        "code_format": 4,
+        "sex_format": 1
+      },
+      "by_source": {
+        "mobile_v2": {
+          "total": 69,
+          "accept": 0,
+          "bad": 0
+        },
+        "web": {
+          "total": 336,
+          "accept": 1,
+          "bad": 0
+        },
+        "mobile": {
+          "total": 202,
+          "accept": 17,
+          "bad": 0
+        }
+      }
+    },
+    {
+      "total": 591,
+      "accept": 18,
+      "correct": 18,
+      "wrong_fields": 0,
+      "invalid_accept": 0,
+      "reasons": {
+        "image_quality": 13,
+        "issuer_ambiguous": 136,
+        "source_place_confidence": 85,
+        "mrz_missing_or_invalid": 87,
+        "place_confidence": 51,
+        "accept": 18,
+        "missing_or_incomplete_field": 60,
+        "mrz_disagreement": 56,
+        "risk_cutoff": 29,
+        "number_format": 11,
+        "name_evidence_truncated": 6,
+        "invalid_dates_or_expired": 32,
+        "sex_format": 2,
+        "code_format": 5
+      },
+      "by_source": {
+        "web": {
+          "total": 312,
+          "accept": 1,
+          "bad": 0
+        },
+        "mobile": {
+          "total": 216,
+          "accept": 17,
+          "bad": 0
+        },
+        "mobile_v2": {
+          "total": 63,
+          "accept": 0,
+          "bad": 0
+        }
+      }
+    },
+    {
+      "total": 564,
+      "accept": 22,
+      "correct": 22,
+      "wrong_fields": 0,
+      "invalid_accept": 0,
+      "reasons": {
+        "source_place_confidence": 84,
+        "place_confidence": 66,
+        "issuer_ambiguous": 128,
+        "invalid_dates_or_expired": 39,
+        "mrz_missing_or_invalid": 80,
+        "missing_or_incomplete_field": 49,
+        "risk_cutoff": 28,
+        "accept": 22,
+        "mrz_disagreement": 45,
+        "number_format": 8,
+        "code_format": 4,
+        "sex_format": 7,
+        "name_evidence_truncated": 2,
+        "name_format": 1,
+        "image_quality": 1
+      },
+      "by_source": {
+        "mobile": {
+          "total": 212,
+          "accept": 22,
+          "bad": 0
+        },
+        "web": {
+          "total": 305,
+          "accept": 0,
+          "bad": 0
+        },
+        "mobile_v2": {
+          "total": 47,
+          "accept": 0,
+          "bad": 0
+        }
+      }
+    }
+  ],
+  "train": {
+    "total": 3000,
+    "accept": 158,
+    "correct": 158,
+    "wrong_fields": 0,
+    "invalid_accept": 0,
+    "reasons": {
+      "source_place_confidence": 676,
+      "image_quality": 36,
+      "mrz_disagreement": 297,
+      "place_confidence": 684,
+      "missing_or_incomplete_field": 301,
+      "invalid_dates_or_expired": 170,
+      "mrz_missing_or_invalid": 407,
+      "accept": 158,
+      "risk_cutoff": 166,
+      "number_format": 39,
+      "name_evidence_truncated": 22,
+      "sex_format": 18,
+      "code_format": 16,
+      "name_format": 4,
+      "issuer_ambiguous": 6
+    },
+    "by_source": {
+      "web": {
+        "total": 1639,
+        "accept": 4,
+        "bad": 0
+      },
+      "mobile": {
+        "total": 1069,
+        "accept": 154,
+        "bad": 0
+      },
+      "mobile_v2": {
+        "total": 292,
+        "accept": 0,
+        "bad": 0
+      }
+    }
+  },
+  "test": {
+    "total": 2000,
+    "accept": 79,
+    "by_source": {
+      "web": {
+        "total": 890,
+        "accept": 2
+      },
+      "mobile": {
+        "total": 679,
+        "accept": 77
+      },
+      "mobile_v2": {
+        "total": 431,
+        "accept": 0
+      }
+    }
+  },
+  "policies": {
+    "web": {
+      "place_threshold": 0.9985,
+      "risk_cutoff": 0.15,
+      "fit_accepted": 4
+    },
+    "mobile": {
+      "place_threshold": 0.995,
+      "risk_cutoff": 1.0888000009999965,
+      "fit_accepted": 154
+    },
+    "mobile_v2": {
+      "place_threshold": 0.995,
+      "risk_cutoff": 0.7999999999999999,
+      "fit_accepted": 0
+    }
+  },
+  "seconds": 14.16,
+  "validation_limitation": "Exploratory data analysis preceded cross-validation; this is internal validation, not an untouched external test."
+}
