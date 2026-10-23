@@ -23,10 +23,15 @@ FLOORS={'web':.95,'mobile':.95,'mobile_v2':.9999}
 # looking at the errors, so it is an operating choice, not a validated rule.
 WEB_MAX_SATURATION=.28
 VARIANTS={
-    # Accept everything the checks support, except saturated web documents.
-    'balanced':{s:{'min_conf':FLOORS[s],'max_saturation':WEB_MAX_SATURATION if s=='web' else 1.0} for s in SOURCES},
     # Only the pool with the lowest observed error rate: unsaturated web.
     'zero':{'web':{'min_conf':FLOORS['web'],'max_saturation':WEB_MAX_SATURATION},'mobile':None,'mobile_v2':None},
+    # Accept everything the checks support, except saturated web documents.
+    'balanced':{s:{'min_conf':FLOORS[s],'max_saturation':WEB_MAX_SATURATION if s=='web' else 1.0} for s in SOURCES},
+    # The same checks without the saturation filter.
+    'max50':{s:{'min_conf':FLOORS[s],'max_saturation':1.0} for s in SOURCES},
+    # A lower floor for birth place and issuer: real OCR errors start below
+    # 0.93, so this variant knowingly accepts some of them.
+    'max53':{s:{'min_conf':.9 if s!='mobile_v2' else FLOORS[s],'max_saturation':1.0} for s in SOURCES},
 }
 DEFAULT_VARIANT='balanced'
 # A name zone at or above `trusted` may overrule the other zone only where the
@@ -93,7 +98,7 @@ def cross_validate(records,labels,variant,variants=VARIANTS,log=True):
     return summary,folds,answers
 
 def answer_file(variant):
-    return 'answers.jsonl' if variant==DEFAULT_VARIANT else f'answers_{variant}.jsonl'
+    return f'variants/{variant}/answers.jsonl'
 
 def main():
     start=time.perf_counter()
@@ -107,7 +112,11 @@ def main():
         cv,folds,validation=cross_validate(records,labels,variant,log=variant==DEFAULT_VARIANT)
         p=Processor(ROOT,variant=variant)
         answers=[p.process(r)[0] for r in test]
-        (ROOT/answer_file(variant)).write_text(''.join(json.dumps(a,ensure_ascii=False)+'\n' for a in answers))
+        content=''.join(json.dumps(a,ensure_ascii=False)+'\n' for a in answers)
+        (ROOT/answer_file(variant)).parent.mkdir(parents=True,exist_ok=True)
+        (ROOT/answer_file(variant)).write_text(content)
+        # The task expects answers.jsonl at the root: the recommended variant.
+        if variant==DEFAULT_VARIANT:(ROOT/'answers.jsonl').write_text(content)
         test_metrics={'total':len(test),'accept':sum(a['decision']=='accept' for a in answers),
                       'reasons':dict(collections.Counter(p.process(r)[1] for r in test)),
                       'by_source':{s:{'total':sum(r['source']==s for r in test),

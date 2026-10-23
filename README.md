@@ -2,10 +2,16 @@
 
 Публичный репозиторий для сдачи: https://github.com/l3thily/passport-ocr-postprocessing
 
-Два варианта решения, отчёт и обоснование прогноза — [REPORT.md](REPORT.md):
+Одно решение с четырьмя порогами строгости. Сводный отчёт и прогноз лежат в [REPORT.md](REPORT.md), подробное описание каждого варианта — в README его папки.
 
-- **сбалансированный (основной)**, `answers.jsonl`: 868 из 2000 принято, прогноз ~4.6 с ошибкой;
-- **нулевой**, `answers_zero.jsonl`: 306 принято, прогноз ~0.5 с ошибкой (шанс ровно нуля ~53%).
+| Вариант | Папка | Принято на test | Ожидаемо ошибок |
+|---|---|---|---|
+| `zero` | [variants/zero](variants/zero/README.md) | 306 (15.3%) | 0.5 |
+| `balanced`, основной | [variants/balanced](variants/balanced/README.md) | 868 (43.4%) | 4.6 |
+| `max50` | [variants/max50](variants/max50/README.md) | 1001 (50.1%) | 7.8 |
+| `max53` | [variants/max53](variants/max53/README.md) | 1061 (53.1%) | 14.5 |
+
+`answers.jsonl` в корне совпадает с `variants/balanced/answers.jsonl`.
 
 ## Запуск
 
@@ -13,7 +19,7 @@
 
 ```sh
 python3 postprocess.py data/test_predictions.jsonl answers.jsonl
-python3 postprocess.py data/test_predictions.jsonl answers_zero.jsonl --variant zero
+python3 postprocess.py data/test_predictions.jsonl answers.jsonl --variant zero   # или balanced, max50, max53
 ```
 
 Инференсу нужны только `core.py`, `postprocess.py`, `model.json` и входной файл. Train и его разметку он не читает.
@@ -21,7 +27,7 @@ python3 postprocess.py data/test_predictions.jsonl answers_zero.jsonl --variant 
 ## Воспроизведение
 
 ```sh
-python3 train.py      # CV и прогноз обоих вариантов, model.json, оба файла ответов, metrics.json
+python3 train.py      # CV и прогноз всех вариантов, model.json, файлы ответов, metrics.json
 python3 tests.py      # 37 тестов: правила, реальные документы, порчи МЧЗ, инварианты ответов
 python3 verify.py     # сверка ответов, метрик и поведения CLI -> verification.json
 python3 evaluate.py validation_answers.jsonl data/train_labels.jsonl
@@ -31,8 +37,8 @@ python3 evaluate.py validation_answers.jsonl data/train_labels.jsonl
 
 ## Файлы
 
-- `postprocess.py`, `core.py` — инференс; `model.json` — пороги обоих вариантов и словарь написаний ведомств по коду подразделения.
-- `answers.jsonl`, `answers_zero.jsonl` — ответы на 2000 документов test для двух вариантов.
+- `postprocess.py`, `core.py` — инференс; `model.json` — пороги всех вариантов и словарь написаний ведомств по коду подразделения.
+- `answers.jsonl` — основной ответ на 2000 документов test; `variants/<имя>/` — ответы и описание каждого варианта.
 - `train.py`, `tests.py`, `verify.py` — воспроизведение и проверки; `metrics.json`, `verification.json` — их результаты.
 - `run-isolated.sh`, `ISOLATION.md`, `audit_security.py`, `security_checks.json` — запуск в песочнице macOS из прошлой версии.
 - `experiments/` — прежние версии решения (79 и 86 принятых) с их отчётами и аудитом; при запуске не используются.

@@ -283,8 +283,8 @@ class SubmittedAnswers(unittest.TestCase):
     def test_accepted_answers_are_backed_by_evidence(self):
         model=json.loads(Path('model.json').read_text())
         records={r['doc_id']:r for r in load_jsonl('data/test_predictions.jsonl')}
-        for variant,name in [('balanced','answers.jsonl'),('zero','answers_zero.jsonl')]:
-            answers=list(load_jsonl(name))
+        for variant in model['variants']:
+            answers=list(load_jsonl(f'variants/{variant}/answers.jsonl'))
             self.assertEqual([a['doc_id'] for a in answers],list(records))
             for a in answers:
                 if a['decision']!='accept':continue
@@ -307,9 +307,14 @@ class SubmittedAnswers(unittest.TestCase):
                     org=r['viz']['Issue_organization_ru']
                     self.assertTrue(confidence(org)>=policy['min_conf'] or f['Issue_organization_ru'] in model['issuers'][f['Issue_organisation_code']])
 
-    def test_zero_variant_is_a_subset_of_balanced(self):
-        balanced={a['doc_id']:a for a in load_jsonl('answers.jsonl')}
-        for a in load_jsonl('answers_zero.jsonl'):
-            if a['decision']=='accept':self.assertEqual(balanced[a['doc_id']],a)
+    def test_variants_are_nested(self):
+        # Each looser variant accepts every document of the stricter one with
+        # the same fields; the root answers.jsonl is the recommended variant.
+        chain=['zero','balanced','max50','max53']
+        answers={v:{a['doc_id']:a for a in load_jsonl(f'variants/{v}/answers.jsonl')} for v in chain}
+        for strict,loose in zip(chain,chain[1:]):
+            for doc_id,a in answers[strict].items():
+                if a['decision']=='accept':self.assertEqual(answers[loose][doc_id],a,(strict,loose))
+        self.assertEqual(Path('answers.jsonl').read_bytes(),Path('variants/balanced/answers.jsonl').read_bytes())
 
 if __name__=='__main__':unittest.main()

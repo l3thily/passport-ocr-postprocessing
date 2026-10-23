@@ -68,12 +68,12 @@ def main():
     assert unit_result.wasSuccessful(),stream.getvalue()
     train=read(ROOT/'data/train_predictions.jsonl');test=read(ROOT/'data/test_predictions.jsonl')
     labels={r['doc_id']:r for r in read(ROOT/'data/train_labels.jsonl')}
-    for name,rs,label_map in [('train_answers.jsonl',train,labels),('validation_answers.jsonl',train,labels),
-                              ('answers.jsonl',test,None),('answers_zero.jsonl',test,None)]:
-        results[name]=check_output(rs,read(ROOT/name),label_map)
     metrics=json.loads((ROOT/'metrics.json').read_text())
+    answer_files=['answers.jsonl']+[v['answers'] for v in metrics['variants'].values()]
+    for name,rs,label_map in [('train_answers.jsonl',train,labels),('validation_answers.jsonl',train,labels)]+[(n,test,None) for n in answer_files]:
+        results[name]=check_output(rs,read(ROOT/name),label_map)
     default=metrics['variants'][metrics['default_variant']]
-    assert default['answers']=='answers.jsonl' and metrics['variants']['zero']['answers']=='answers_zero.jsonl'
+    assert (ROOT/'answers.jsonl').read_bytes()==(ROOT/default['answers']).read_bytes()
     assert results['train_answers.jsonl']['accepted']==default['train_in_sample']['accept']
     assert results['validation_answers.jsonl']['accepted']==default['cross_validation']['accept']
     for variant in metrics['variants'].values():
@@ -93,10 +93,11 @@ def main():
         results['inference_seconds']=round(time.perf_counter()-start,4)
         assert (temp/'answers.jsonl').read_bytes()==(ROOT/'answers.jsonl').read_bytes()
         checks['byte_identical_inference']=True
-        child=run_cli(ROOT/'data/test_predictions.jsonl',temp/'answers_zero.jsonl',extra=['--variant','zero'])
-        assert child.returncode==0,child.stderr
-        assert (temp/'answers_zero.jsonl').read_bytes()==(ROOT/'answers_zero.jsonl').read_bytes()
-        checks['byte_identical_inference_zero_variant']=True
+        for name,variant in metrics['variants'].items():
+            child=run_cli(ROOT/'data/test_predictions.jsonl',temp/f'{name}.jsonl',extra=['--variant',name])
+            assert child.returncode==0,child.stderr
+            assert (temp/f'{name}.jsonl').read_bytes()==(ROOT/variant['answers']).read_bytes()
+            checks[f'byte_identical_inference_{name}']=True
         item=json.dumps(test[0],ensure_ascii=False)+'\n'
         for name,payload in [('duplicate',item+item),('bad_json','{broken}\n'),('not_object','[]\n')]:
             inp=temp/(name+'.jsonl');inp.write_text(payload)
@@ -121,7 +122,7 @@ def main():
         assert (runtime/'output.jsonl').read_bytes()==(ROOT/'answers.jsonl').read_bytes()
         checks['inference_without_training_files']=True
     results['cli_checks']=checks
-    results['answers_sha256']={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in ['answers.jsonl','answers_zero.jsonl']}
+    results['answers_sha256']={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in answer_files}
     results['schema_valid_on_all_2000_rows']=True
     results['unit_tests_passed']=unit_result.testsRun
     results['source_sha256']={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()

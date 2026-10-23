@@ -12,7 +12,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input',type=Path)
     parser.add_argument('output',type=Path)
-    parser.add_argument('--variant',choices=['balanced','zero'],help='acceptance policy (default: balanced, see REPORT.md)')
+    parser.add_argument('--variant',choices=['zero','balanced','max50','max53'],help='acceptance policy (default: balanced, see REPORT.md)')
     args=parser.parse_args()
     if args.input.resolve()==args.output.resolve():parser.error('input and output must differ')
     p=Processor(Path(__file__).resolve().parent,variant=args.variant)

@@ -2,6 +2,14 @@
  "schema_version": 3,
  "default_variant": "balanced",
  "variants": {
+  "zero": {
+   "web": {
+    "min_conf": 0.95,
+    "max_saturation": 0.28
+   },
+   "mobile": null,
+   "mobile_v2": null
+  },
   "balanced": {
    "web": {
     "min_conf": 0.95,
@@ -16,13 +24,33 @@
     "max_saturation": 1.0
    }
   },
-  "zero": {
+  "max50": {
    "web": {
     "min_conf": 0.95,
-    "max_saturation": 0.28
+    "max_saturation": 1.0
    },
-   "mobile": null,
-   "mobile_v2": null
+   "mobile": {
+    "min_conf": 0.95,
+    "max_saturation": 1.0
+   },
+   "mobile_v2": {
+    "min_conf": 0.9999,
+    "max_saturation": 1.0
+   }
+  },
+  "max53": {
+   "web": {
+    "min_conf": 0.9,
+    "max_saturation": 1.0
+   },
+   "mobile": {
+    "min_conf": 0.9,
+    "max_saturation": 1.0
+   },
+   "mobile_v2": {
+    "min_conf": 0.9999,
+    "max_saturation": 1.0
+   }
   }
  },
  "names": {
