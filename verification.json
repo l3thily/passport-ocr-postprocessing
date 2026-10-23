@@ -17,7 +17,7 @@
     "wrong_fields": null,
     "invalid_accepted": null
   },
-  "inference_seconds": 0.7647,
+  "inference_seconds": 0.8606,
   "cli_checks": {
     "byte_identical_inference": true,
     "duplicate_atomic_failure": true,
@@ -28,12 +28,12 @@
   },
   "answers_sha256": "66b5d5f0ef2ef8d929a0de42e3b6790ed6602d19dfba3cf397b370fd57a0fe98",
   "schema_valid_on_all_2000_rows": true,
-  "unit_tests_passed": 28,
+  "unit_tests_passed": 34,
   "source_sha256": {
-    "core.py": "e719c589dbc312334ac33a5cab0af911fa392c7a6438d8729834d750978c0765",
+    "core.py": "0b1fba0dff937380d5dab4f7c1954835bc2d577e82748c51ea0e7ada7ba2e4ca",
     "postprocess.py": "2a19b7ede944751f44b48ec7dce7a3db4e53fe34e7f0d73409749b067d740418",
     "train.py": "3c9d36cc7f824db115c5c505bec3ae8af1d548d7c6dcd8a0aa0e730702b4b991",
-    "tests.py": "a31d98f3a7c4d7ce5a39d0752f451c8862368484dba7e9dcae9328eac4520d4a",
+    "tests.py": "33deb7bd51919d14cb421e49e3d32740a96cf40b8b73c0ae87032c4a37a0f1aa",
     "model.json": "8c3f70d50b861423a096c7b97d250d4eedb6163c1eed8023505f2e0353adb1f1",
     "run-isolated.sh": "ebea2ad9856d5dc1fcbc050f881133b4d9d116cc7340c77123563b8dfd9f0124"
   },

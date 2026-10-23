@@ -171,7 +171,13 @@ def mrz_fields(record, viz_fields):
     Constant positions (RUS and fillers) carry no data and are restored before
     verification. When exactly one data segment fails its check digit, the
     visual-zone value for that segment is accepted only if it satisfies both
-    the MRZ segment check digit and the composite check digit."""
+    the MRZ segment check digit and the composite check digit.
+
+    Two misread digits in one segment can cancel out in both check digits.
+    When the visual zone offers a different value for a segment that passes the
+    same check digits, the MRZ cannot decide between them and nothing is
+    returned. A single confident misreading in the visual zone never passes
+    them, so it is still overruled."""
     raw=(record.get('mrz') or {}).get('lines',[])
     if len(raw)!=2:return None
     b=norm(raw[1].get('text',''))
@@ -188,9 +194,24 @@ def mrz_fields(record, viz_fields):
         # misread; the visual zone must then reproduce all data exactly.
         elif b[:20]+b[21:43]==viz_line[:20]+viz_line[21:43]:b=b[:43]+viz_line[43]
         if not checksums_ok(b):return None
+    trusted=decode_line2(b,viz_fields['Sex_ru'])
+    if not trusted:return None
+    # Fields the visual zone could not read are taken from the MRZ, so that
+    # only real alternative readings are compared segment by segment.
+    readable={'Licence_number':re.fullmatch(r'\d{2} \d{2} \d{6}',viz_fields['Licence_number']),
+              'Birth_date':parse_date(viz_fields['Birth_date']),'Issue_date':parse_date(viz_fields['Issue_date']),
+              'Issue_organisation_code':re.fullmatch(r'\d{3}-\d{3}',viz_fields['Issue_organisation_code']),
+              'Sex_ru':viz_fields['Sex_ru'] in ('МУЖ.','ЖЕН.')}
+    viz_line=line2({k:viz_fields[k] if ok else trusted[k] for k,ok in readable.items()})
+    if viz_line and any(viz_line[s]!=b[s] and checksums_ok(b[:s.start]+viz_line[s]+b[s.stop:]) for s,_ in MRZ_SEGMENTS):
+        return None
+    return trusted
+
+def decode_line2(b,viz_sex):
+    """Fields of a verified MRZ line 2; sex falls back to the visual zone."""
     if not (b[:9].isdigit() and b[13:19].isdigit() and b[28:41].isdigit()):return None
     if b[20] in 'MF':sex='МУЖ.' if b[20]=='M' else 'ЖЕН.'
-    elif viz_fields['Sex_ru'] in ('МУЖ.','ЖЕН.'):sex=viz_fields['Sex_ru']
+    elif viz_sex in ('МУЖ.','ЖЕН.'):sex=viz_sex
     else:return None
     opt=b[28:42]
     digits=b[:3]+opt[0]+b[3:9]

@@ -193,4 +193,98 @@ class Rules(unittest.TestCase):
         with self.assertRaises(ValueError):
             Processor('.',self.model(policies={s:{'min_conf':float('nan')} for s in SOURCES}))
 
+class RealData(unittest.TestCase):
+    """Regression and perturbation tests on real train documents."""
+    @classmethod
+    def setUpClass(cls):
+        cls.p=Processor('.')
+        cls.records={r['doc_id']:r for r in load_jsonl('data/train_predictions.jsonl')}
+        cls.labels={r['doc_id']:r['fields'] for r in load_jsonl('data/train_labels.jsonl')}
+        cls.accepted=[]
+        for r in list(cls.records.values())[:600]:
+            answer=cls.p.process(r)[0]
+            if answer['decision']=='accept':cls.accepted.append((r,answer))
+
+    def viz(self,r):
+        return {k:normalize_field(k,text(r['viz'].get(k))) for k in FIELDS}
+
+    def test_each_decision_path_on_real_documents(self):
+        for doc_id,path in [('tr_00084','repaired_mrz'),('tr_00004','mrz_over_doubtful_viz'),('tr_00327','viz_over_doubtful_mrz')]:
+            with self.subTest(doc_id=doc_id):
+                r=self.records[doc_id];answer,reason=self.p.process(r)
+                self.assertEqual(reason,'accept')
+                self.assertEqual({k:norm(v) for k,v in answer['fields'].items()},{k:norm(v) for k,v in self.labels[doc_id].items()})
+                if path=='repaired_mrz':self.assertFalse(checksums_ok(r['mrz']['lines'][1]['text']))
+                else:self.assertEqual(self.p.resolve_names(r,self.viz(r))[1],path)
+
+    def test_real_ocr_errors_are_rejected(self):
+        # Birth place misread with confidence 0.905-0.927, just under the
+        # floor, and a document where both zones misread the name differently.
+        for doc_id,reason in [('tr_01589','low_confidence_Birth_place_ru'),('tr_02755','low_confidence_Birth_place_ru'),
+                              ('tr_01962','low_confidence_Birth_place_ru'),('tr_02644','name_disagreement')]:
+            with self.subTest(doc_id=doc_id):self.assertEqual(self.p.process(self.records[doc_id])[1],reason)
+
+    def test_single_mrz_digit_error_never_changes_an_answer(self):
+        for r,answer in self.accepted:
+            text2=r['mrz']['lines'][1]['text']
+            for i in [i for s,_ in MRZ_SEGMENTS for i in range(s.start,s.stop) if text2[i].isdigit()]:
+                for delta in (1,5):
+                    q=copy.deepcopy(r);q['mrz']['lines'][1]['text']=text2[:i]+str((int(text2[i])+delta)%10)+text2[i+1:]
+                    got=self.p.process(q)[0]
+                    self.assertIn(got.get('fields'),(None,answer['fields']),(r['doc_id'],i,delta))
+
+    def test_cancelling_mrz_errors_defer_to_visual_zone(self):
+        # Two misread digits of the serial that still satisfy every check digit.
+        for r,answer in self.accepted[:50]:
+            b=r['mrz']['lines'][1]['text']
+            if not checksums_ok(b):continue
+            for i in range(9):
+                for j in range(i+1,9):
+                    for d in range(1,10):
+                        for e in range(1,10):
+                            t=list(b);t[i]=str((int(t[i])+d)%10);t[j]=str((int(t[j])+e)%10);t=''.join(t)
+                            if checksums_ok(t):
+                                q=copy.deepcopy(r);q['mrz']['lines'][1]['text']=t
+                                self.assertEqual(self.p.process(q)[1],'mrz_unverified')
+                                return
+        self.fail('no cancelling pair found')
+
+    def test_name_letter_errors(self):
+        for r,answer in self.accepted[:150]:
+            line=r['viz']['Last_name_ru']['lines'][0]
+            if line['text'][0]=='Ж':continue
+            for conf,expected in [(.999,'reject'),(.3,'accept')]:
+                q=copy.deepcopy(r);l=q['viz']['Last_name_ru']['lines'][0]
+                l['text']='Ж'+l['text'][1:];l['char_conf'][0]=conf
+                got=self.p.process(q)[0]
+                with self.subTest(doc_id=r['doc_id'],conf=conf):
+                    if expected=='reject':self.assertEqual(got['decision'],'reject')
+                    else:self.assertIn(got.get('fields'),(None,answer['fields']))
+
+class SubmittedAnswers(unittest.TestCase):
+    """Properties every accepted test answer must have, checked from inputs."""
+    def test_accepted_answers_are_backed_by_evidence(self):
+        model=json.loads(Path('model.json').read_text())
+        records={r['doc_id']:r for r in load_jsonl('data/test_predictions.jsonl')}
+        answers=list(load_jsonl('answers.jsonl'))
+        self.assertEqual([a['doc_id'] for a in answers],list(records))
+        for a in answers:
+            if a['decision']!='accept':continue
+            r,f=records[a['doc_id']],a['fields']
+            with self.subTest(doc_id=a['doc_id']):
+                self.assertTrue(valid_dates(f));self.assertFalse(replacement_pending(f))
+                # The answer reproduces the MRZ segment check digits and at
+                # least two of its three data segments verbatim; the composite
+                # digit may differ only when all data agrees.
+                mine,mrz=line2(f),r['mrz']['lines'][1]['text']
+                self.assertEqual([mine[d] for _,d in MRZ_SEGMENTS],[mrz[d] for _,d in MRZ_SEGMENTS])
+                same=sum(mine[s]==mrz[s] for s,_ in MRZ_SEGMENTS)
+                self.assertGreaterEqual(same,2)
+                self.assertTrue(mine[43]==mrz[43] or same==3)
+                floor=model['policies'][r['source']]['min_conf']
+                self.assertGreaterEqual(confidence(r['viz']['Birth_place_ru']),floor)
+                self.assertEqual(f['Birth_place_ru'],text(r['viz']['Birth_place_ru']))
+                org=r['viz']['Issue_organization_ru']
+                self.assertTrue(confidence(org)>=floor or f['Issue_organization_ru'] in model['issuers'][f['Issue_organisation_code']])
+
 if __name__=='__main__':unittest.main()

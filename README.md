@@ -18,7 +18,7 @@ python3 postprocess.py data/test_predictions.jsonl answers.jsonl
 
 ```sh
 python3 train.py      # CV, кривая порога, model.json, answers.jsonl, metrics.json
-python3 tests.py      # 28 тестов правил
+python3 tests.py      # 34 теста: правила, реальные документы, порчи МЧЗ, инварианты ответов
 python3 verify.py     # сверка ответов, метрик и поведения CLI -> verification.json
 python3 evaluate.py validation_answers.jsonl data/train_labels.jsonl
 ```
