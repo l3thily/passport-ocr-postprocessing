@@ -310,7 +310,7 @@ class SubmittedAnswers(unittest.TestCase):
     def test_variants_are_nested(self):
         # Each looser variant accepts every document of the stricter one with
         # the same fields; the root answers.jsonl is the recommended variant.
-        chain=['zero','balanced','max50','max53']
+        chain=['zero','balanced','max50']
         answers={v:{a['doc_id']:a for a in load_jsonl(f'variants/{v}/answers.jsonl')} for v in chain}
         for strict,loose in zip(chain,chain[1:]):
             for doc_id,a in answers[strict].items():

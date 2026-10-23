@@ -29,9 +29,6 @@ VARIANTS={
     'balanced':{s:{'min_conf':FLOORS[s],'max_saturation':WEB_MAX_SATURATION if s=='web' else 1.0} for s in SOURCES},
     # The same checks without the saturation filter.
     'max50':{s:{'min_conf':FLOORS[s],'max_saturation':1.0} for s in SOURCES},
-    # A lower floor for birth place and issuer: real OCR errors start below
-    # 0.93, so this variant knowingly accepts some of them.
-    'max53':{s:{'min_conf':.9 if s!='mobile_v2' else FLOORS[s],'max_saturation':1.0} for s in SOURCES},
 }
 DEFAULT_VARIANT='balanced'
 # A name zone at or above `trusted` may overrule the other zone only where the

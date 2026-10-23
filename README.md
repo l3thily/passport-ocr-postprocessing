@@ -2,14 +2,13 @@
 
 Публичный репозиторий для сдачи: https://github.com/l3thily/passport-ocr-postprocessing
 
-Одно решение с четырьмя порогами строгости. Сводный отчёт и прогноз лежат в [REPORT.md](REPORT.md), подробное описание каждого варианта — в README его папки.
+Одно решение с тремя порогами строгости. Сводный отчёт и прогноз лежат в [REPORT.md](REPORT.md), подробное описание каждого варианта — в README его папки.
 
 | Вариант | Папка | Принято на test | Ожидаемо ошибок |
 |---|---|---|---|
 | `zero` | [variants/zero](variants/zero/README.md) | 306 (15.3%) | 0.5 |
 | `balanced`, основной | [variants/balanced](variants/balanced/README.md) | 868 (43.4%) | 4.6 |
 | `max50` | [variants/max50](variants/max50/README.md) | 1001 (50.1%) | 7.8 |
-| `max53` | [variants/max53](variants/max53/README.md) | 1061 (53.1%) | 14.5 |
 
 `answers.jsonl` в корне совпадает с `variants/balanced/answers.jsonl`.
 
@@ -19,7 +18,7 @@
 
 ```sh
 python3 postprocess.py data/test_predictions.jsonl answers.jsonl
-python3 postprocess.py data/test_predictions.jsonl answers.jsonl --variant zero   # или balanced, max50, max53
+python3 postprocess.py data/test_predictions.jsonl answers.jsonl --variant zero   # или balanced, max50
 ```
 
 Инференсу нужны только `core.py`, `postprocess.py`, `model.json` и входной файл. Train и его разметку он не читает.
