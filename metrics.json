@@ -1,237 +1,620 @@
 {
-  "cross_validation": {
-    "accept": 1512,
-    "wrong": 11,
-    "wrong_zones_agree": 11,
-    "by_source": {
-      "web": {
-        "total": 1639,
-        "accept": 812,
-        "wrong": 7
+  "variants": {
+    "balanced": {
+      "answers": "answers.jsonl",
+      "policy": {
+        "web": {
+          "min_conf": 0.95,
+          "max_saturation": 0.28
+        },
+        "mobile": {
+          "min_conf": 0.95,
+          "max_saturation": 1.0
+        },
+        "mobile_v2": {
+          "min_conf": 0.9999,
+          "max_saturation": 1.0
+        }
       },
-      "mobile": {
-        "total": 1069,
-        "accept": 551,
-        "wrong": 2
+      "cross_validation": {
+        "accept": 1273,
+        "wrong": 5,
+        "wrong_zones_agree": 5,
+        "reasons": {
+          "low_confidence_Issue_organization_ru": 217,
+          "accept": 1273,
+          "low_confidence_Birth_place_ru": 331,
+          "mrz_unverified": 313,
+          "name_disagreement": 283,
+          "missing_or_incomplete_field": 201,
+          "saturated_confidence": 239,
+          "mrz_names_unreadable": 59,
+          "invalid_dates_or_expired": 72,
+          "replacement_grace_period": 12
+        },
+        "by_source": {
+          "web": {
+            "total": 1639,
+            "accept": 573,
+            "wrong": 1
+          },
+          "mobile": {
+            "total": 1069,
+            "accept": 551,
+            "wrong": 2
+          },
+          "mobile_v2": {
+            "total": 292,
+            "accept": 149,
+            "wrong": 2
+          }
+        }
       },
-      "mobile_v2": {
-        "total": 292,
-        "accept": 149,
-        "wrong": 2
+      "folds": [
+        {
+          "total": 614,
+          "accept": 255,
+          "correct": 252,
+          "wrong": 3,
+          "wrong_zones_agree": 3,
+          "reasons": {
+            "low_confidence_Issue_organization_ru": 48,
+            "accept": 255,
+            "low_confidence_Birth_place_ru": 74,
+            "mrz_unverified": 57,
+            "name_disagreement": 58,
+            "missing_or_incomplete_field": 41,
+            "saturated_confidence": 51,
+            "mrz_names_unreadable": 14,
+            "invalid_dates_or_expired": 12,
+            "replacement_grace_period": 4
+          },
+          "by_source": {
+            "web": {
+              "total": 358,
+              "accept": 126,
+              "wrong": 0
+            },
+            "mobile": {
+              "total": 194,
+              "accept": 95,
+              "wrong": 1
+            },
+            "mobile_v2": {
+              "total": 62,
+              "accept": 34,
+              "wrong": 2
+            }
+          }
+        },
+        {
+          "total": 624,
+          "accept": 255,
+          "correct": 255,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "accept": 255,
+            "invalid_dates_or_expired": 13,
+            "low_confidence_Birth_place_ru": 65,
+            "missing_or_incomplete_field": 47,
+            "low_confidence_Issue_organization_ru": 48,
+            "name_disagreement": 64,
+            "saturated_confidence": 61,
+            "mrz_unverified": 58,
+            "mrz_names_unreadable": 13
+          },
+          "by_source": {
+            "mobile_v2": {
+              "total": 51,
+              "accept": 25,
+              "wrong": 0
+            },
+            "mobile": {
+              "total": 245,
+              "accept": 139,
+              "wrong": 0
+            },
+            "web": {
+              "total": 328,
+              "accept": 91,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 607,
+          "accept": 263,
+          "correct": 263,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "accept": 263,
+            "low_confidence_Birth_place_ru": 66,
+            "name_disagreement": 49,
+            "missing_or_incomplete_field": 45,
+            "mrz_unverified": 77,
+            "saturated_confidence": 40,
+            "low_confidence_Issue_organization_ru": 40,
+            "invalid_dates_or_expired": 13,
+            "mrz_names_unreadable": 13,
+            "replacement_grace_period": 1
+          },
+          "by_source": {
+            "mobile_v2": {
+              "total": 69,
+              "accept": 37,
+              "wrong": 0
+            },
+            "web": {
+              "total": 336,
+              "accept": 124,
+              "wrong": 0
+            },
+            "mobile": {
+              "total": 202,
+              "accept": 102,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 591,
+          "accept": 247,
+          "correct": 245,
+          "wrong": 2,
+          "wrong_zones_agree": 2,
+          "reasons": {
+            "mrz_unverified": 62,
+            "accept": 247,
+            "missing_or_incomplete_field": 39,
+            "low_confidence_Birth_place_ru": 58,
+            "name_disagreement": 66,
+            "saturated_confidence": 39,
+            "low_confidence_Issue_organization_ru": 51,
+            "mrz_names_unreadable": 11,
+            "replacement_grace_period": 2,
+            "invalid_dates_or_expired": 16
+          },
+          "by_source": {
+            "web": {
+              "total": 312,
+              "accept": 116,
+              "wrong": 1
+            },
+            "mobile": {
+              "total": 216,
+              "accept": 103,
+              "wrong": 1
+            },
+            "mobile_v2": {
+              "total": 63,
+              "accept": 28,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 564,
+          "accept": 253,
+          "correct": 253,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "accept": 253,
+            "saturated_confidence": 48,
+            "mrz_unverified": 59,
+            "missing_or_incomplete_field": 29,
+            "low_confidence_Birth_place_ru": 68,
+            "replacement_grace_period": 5,
+            "low_confidence_Issue_organization_ru": 30,
+            "mrz_names_unreadable": 8,
+            "name_disagreement": 46,
+            "invalid_dates_or_expired": 18
+          },
+          "by_source": {
+            "mobile": {
+              "total": 212,
+              "accept": 112,
+              "wrong": 0
+            },
+            "web": {
+              "total": 305,
+              "accept": 116,
+              "wrong": 0
+            },
+            "mobile_v2": {
+              "total": 47,
+              "accept": 25,
+              "wrong": 0
+            }
+          }
+        }
+      ],
+      "train_in_sample": {
+        "total": 3000,
+        "accept": 1395,
+        "correct": 1389,
+        "wrong": 6,
+        "wrong_zones_agree": 6,
+        "reasons": {
+          "saturated_confidence": 250,
+          "mrz_unverified": 313,
+          "accept": 1395,
+          "low_confidence_Birth_place_ru": 331,
+          "invalid_dates_or_expired": 72,
+          "missing_or_incomplete_field": 201,
+          "name_disagreement": 283,
+          "low_confidence_Issue_organization_ru": 84,
+          "replacement_grace_period": 12,
+          "mrz_names_unreadable": 59
+        },
+        "by_source": {
+          "web": {
+            "total": 1639,
+            "accept": 631,
+            "wrong": 2
+          },
+          "mobile": {
+            "total": 1069,
+            "accept": 607,
+            "wrong": 2
+          },
+          "mobile_v2": {
+            "total": 292,
+            "accept": 157,
+            "wrong": 2
+          }
+        }
+      },
+      "test": {
+        "total": 2000,
+        "accept": 868,
+        "reasons": {
+          "name_disagreement": 212,
+          "accept": 868,
+          "mrz_names_unreadable": 32,
+          "mrz_unverified": 211,
+          "low_confidence_Birth_place_ru": 228,
+          "invalid_dates_or_expired": 41,
+          "missing_or_incomplete_field": 128,
+          "saturated_confidence": 133,
+          "low_confidence_Issue_organization_ru": 137,
+          "replacement_grace_period": 10
+        },
+        "by_source": {
+          "web": {
+            "total": 890,
+            "accept": 306
+          },
+          "mobile": {
+            "total": 679,
+            "accept": 360
+          },
+          "mobile_v2": {
+            "total": 431,
+            "accept": 202
+          }
+        }
+      },
+      "forecast": {
+        "expected": 4.55,
+        "interval_90": [
+          1,
+          12
+        ],
+        "probability_zero": 0.02
       }
-    }
-  },
-  "folds": [
-    {
-      "total": 614,
-      "accept": 306,
-      "correct": 303,
-      "wrong": 3,
-      "wrong_zones_agree": 3,
-      "reasons": {
-        "low_confidence_Issue_organization_ru": 48,
+    },
+    "zero": {
+      "answers": "answers_zero.jsonl",
+      "policy": {
+        "web": {
+          "min_conf": 0.95,
+          "max_saturation": 0.28
+        },
+        "mobile": null,
+        "mobile_v2": null
+      },
+      "cross_validation": {
+        "accept": 573,
+        "wrong": 1,
+        "wrong_zones_agree": 1,
+        "reasons": {
+          "low_confidence_Issue_organization_ru": 107,
+          "source_not_accepted": 1361,
+          "low_confidence_Birth_place_ru": 194,
+          "mrz_unverified": 182,
+          "name_disagreement": 153,
+          "accept": 573,
+          "saturated_confidence": 239,
+          "mrz_names_unreadable": 35,
+          "missing_or_incomplete_field": 114,
+          "replacement_grace_period": 4,
+          "invalid_dates_or_expired": 38
+        },
+        "by_source": {
+          "web": {
+            "total": 1639,
+            "accept": 573,
+            "wrong": 1
+          },
+          "mobile": {
+            "total": 1069,
+            "accept": 0,
+            "wrong": 0
+          },
+          "mobile_v2": {
+            "total": 292,
+            "accept": 0,
+            "wrong": 0
+          }
+        }
+      },
+      "folds": [
+        {
+          "total": 614,
+          "accept": 126,
+          "correct": 126,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "low_confidence_Issue_organization_ru": 23,
+            "source_not_accepted": 256,
+            "low_confidence_Birth_place_ru": 46,
+            "mrz_unverified": 42,
+            "name_disagreement": 34,
+            "accept": 126,
+            "saturated_confidence": 51,
+            "mrz_names_unreadable": 7,
+            "missing_or_incomplete_field": 21,
+            "replacement_grace_period": 1,
+            "invalid_dates_or_expired": 7
+          },
+          "by_source": {
+            "web": {
+              "total": 358,
+              "accept": 126,
+              "wrong": 0
+            },
+            "mobile": {
+              "total": 194,
+              "accept": 0,
+              "wrong": 0
+            },
+            "mobile_v2": {
+              "total": 62,
+              "accept": 0,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 624,
+          "accept": 91,
+          "correct": 91,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "source_not_accepted": 296,
+            "low_confidence_Birth_place_ru": 43,
+            "accept": 91,
+            "missing_or_incomplete_field": 24,
+            "low_confidence_Issue_organization_ru": 27,
+            "saturated_confidence": 61,
+            "mrz_unverified": 33,
+            "name_disagreement": 32,
+            "mrz_names_unreadable": 11,
+            "invalid_dates_or_expired": 6
+          },
+          "by_source": {
+            "mobile_v2": {
+              "total": 51,
+              "accept": 0,
+              "wrong": 0
+            },
+            "mobile": {
+              "total": 245,
+              "accept": 0,
+              "wrong": 0
+            },
+            "web": {
+              "total": 328,
+              "accept": 91,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 607,
+          "accept": 124,
+          "correct": 124,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "source_not_accepted": 271,
+            "low_confidence_Birth_place_ru": 36,
+            "name_disagreement": 29,
+            "accept": 124,
+            "missing_or_incomplete_field": 28,
+            "saturated_confidence": 40,
+            "mrz_unverified": 42,
+            "invalid_dates_or_expired": 7,
+            "low_confidence_Issue_organization_ru": 23,
+            "mrz_names_unreadable": 7
+          },
+          "by_source": {
+            "mobile_v2": {
+              "total": 69,
+              "accept": 0,
+              "wrong": 0
+            },
+            "web": {
+              "total": 336,
+              "accept": 124,
+              "wrong": 0
+            },
+            "mobile": {
+              "total": 202,
+              "accept": 0,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 591,
+          "accept": 116,
+          "correct": 115,
+          "wrong": 1,
+          "wrong_zones_agree": 1,
+          "reasons": {
+            "mrz_unverified": 37,
+            "accept": 116,
+            "missing_or_incomplete_field": 24,
+            "source_not_accepted": 279,
+            "name_disagreement": 33,
+            "saturated_confidence": 39,
+            "low_confidence_Birth_place_ru": 27,
+            "low_confidence_Issue_organization_ru": 22,
+            "replacement_grace_period": 1,
+            "invalid_dates_or_expired": 8,
+            "mrz_names_unreadable": 5
+          },
+          "by_source": {
+            "web": {
+              "total": 312,
+              "accept": 116,
+              "wrong": 1
+            },
+            "mobile": {
+              "total": 216,
+              "accept": 0,
+              "wrong": 0
+            },
+            "mobile_v2": {
+              "total": 63,
+              "accept": 0,
+              "wrong": 0
+            }
+          }
+        },
+        {
+          "total": 564,
+          "accept": 116,
+          "correct": 116,
+          "wrong": 0,
+          "wrong_zones_agree": 0,
+          "reasons": {
+            "source_not_accepted": 259,
+            "accept": 116,
+            "saturated_confidence": 48,
+            "missing_or_incomplete_field": 17,
+            "low_confidence_Birth_place_ru": 42,
+            "replacement_grace_period": 2,
+            "mrz_names_unreadable": 5,
+            "name_disagreement": 25,
+            "mrz_unverified": 28,
+            "invalid_dates_or_expired": 10,
+            "low_confidence_Issue_organization_ru": 12
+          },
+          "by_source": {
+            "mobile": {
+              "total": 212,
+              "accept": 0,
+              "wrong": 0
+            },
+            "web": {
+              "total": 305,
+              "accept": 116,
+              "wrong": 0
+            },
+            "mobile_v2": {
+              "total": 47,
+              "accept": 0,
+              "wrong": 0
+            }
+          }
+        }
+      ],
+      "train_in_sample": {
+        "total": 3000,
+        "accept": 631,
+        "correct": 629,
+        "wrong": 2,
+        "wrong_zones_agree": 2,
+        "reasons": {
+          "saturated_confidence": 250,
+          "mrz_unverified": 182,
+          "source_not_accepted": 1361,
+          "accept": 631,
+          "low_confidence_Birth_place_ru": 194,
+          "missing_or_incomplete_field": 114,
+          "name_disagreement": 153,
+          "replacement_grace_period": 4,
+          "low_confidence_Issue_organization_ru": 38,
+          "mrz_names_unreadable": 35,
+          "invalid_dates_or_expired": 38
+        },
+        "by_source": {
+          "web": {
+            "total": 1639,
+            "accept": 631,
+            "wrong": 2
+          },
+          "mobile": {
+            "total": 1069,
+            "accept": 0,
+            "wrong": 0
+          },
+          "mobile_v2": {
+            "total": 292,
+            "accept": 0,
+            "wrong": 0
+          }
+        }
+      },
+      "test": {
+        "total": 2000,
         "accept": 306,
-        "low_confidence_Birth_place_ru": 74,
-        "mrz_unverified": 57,
-        "name_disagreement": 58,
-        "missing_or_incomplete_field": 41,
-        "mrz_names_unreadable": 14,
-        "invalid_dates_or_expired": 12,
-        "replacement_grace_period": 4
-      },
-      "by_source": {
-        "web": {
-          "total": 358,
-          "accept": 177,
-          "wrong": 0
+        "reasons": {
+          "source_not_accepted": 1110,
+          "accept": 306,
+          "name_disagreement": 99,
+          "saturated_confidence": 133,
+          "missing_or_incomplete_field": 55,
+          "low_confidence_Birth_place_ru": 111,
+          "mrz_unverified": 103,
+          "invalid_dates_or_expired": 14,
+          "low_confidence_Issue_organization_ru": 53,
+          "replacement_grace_period": 2,
+          "mrz_names_unreadable": 14
         },
-        "mobile": {
-          "total": 194,
-          "accept": 95,
-          "wrong": 1
-        },
-        "mobile_v2": {
-          "total": 62,
-          "accept": 34,
-          "wrong": 2
+        "by_source": {
+          "web": {
+            "total": 890,
+            "accept": 306
+          },
+          "mobile": {
+            "total": 679,
+            "accept": 0
+          },
+          "mobile_v2": {
+            "total": 431,
+            "accept": 0
+          }
         }
-      }
-    },
-    {
-      "total": 624,
-      "accept": 316,
-      "correct": 315,
-      "wrong": 1,
-      "wrong_zones_agree": 1,
-      "reasons": {
-        "accept": 316,
-        "invalid_dates_or_expired": 13,
-        "low_confidence_Birth_place_ru": 65,
-        "missing_or_incomplete_field": 47,
-        "low_confidence_Issue_organization_ru": 48,
-        "name_disagreement": 64,
-        "mrz_unverified": 58,
-        "mrz_names_unreadable": 13
       },
-      "by_source": {
-        "mobile_v2": {
-          "total": 51,
-          "accept": 25,
-          "wrong": 0
-        },
-        "mobile": {
-          "total": 245,
-          "accept": 139,
-          "wrong": 0
-        },
-        "web": {
-          "total": 328,
-          "accept": 152,
-          "wrong": 1
-        }
-      }
-    },
-    {
-      "total": 607,
-      "accept": 303,
-      "correct": 301,
-      "wrong": 2,
-      "wrong_zones_agree": 2,
-      "reasons": {
-        "accept": 303,
-        "low_confidence_Birth_place_ru": 66,
-        "name_disagreement": 49,
-        "missing_or_incomplete_field": 45,
-        "mrz_unverified": 77,
-        "low_confidence_Issue_organization_ru": 40,
-        "invalid_dates_or_expired": 13,
-        "mrz_names_unreadable": 13,
-        "replacement_grace_period": 1
-      },
-      "by_source": {
-        "mobile_v2": {
-          "total": 69,
-          "accept": 37,
-          "wrong": 0
-        },
-        "web": {
-          "total": 336,
-          "accept": 164,
-          "wrong": 2
-        },
-        "mobile": {
-          "total": 202,
-          "accept": 102,
-          "wrong": 0
-        }
-      }
-    },
-    {
-      "total": 591,
-      "accept": 286,
-      "correct": 283,
-      "wrong": 3,
-      "wrong_zones_agree": 3,
-      "reasons": {
-        "mrz_unverified": 62,
-        "accept": 286,
-        "missing_or_incomplete_field": 39,
-        "low_confidence_Birth_place_ru": 58,
-        "name_disagreement": 66,
-        "low_confidence_Issue_organization_ru": 51,
-        "mrz_names_unreadable": 11,
-        "replacement_grace_period": 2,
-        "invalid_dates_or_expired": 16
-      },
-      "by_source": {
-        "web": {
-          "total": 312,
-          "accept": 155,
-          "wrong": 2
-        },
-        "mobile": {
-          "total": 216,
-          "accept": 103,
-          "wrong": 1
-        },
-        "mobile_v2": {
-          "total": 63,
-          "accept": 28,
-          "wrong": 0
-        }
-      }
-    },
-    {
-      "total": 564,
-      "accept": 301,
-      "correct": 299,
-      "wrong": 2,
-      "wrong_zones_agree": 2,
-      "reasons": {
-        "accept": 301,
-        "mrz_unverified": 59,
-        "missing_or_incomplete_field": 29,
-        "low_confidence_Birth_place_ru": 68,
-        "replacement_grace_period": 5,
-        "low_confidence_Issue_organization_ru": 30,
-        "mrz_names_unreadable": 8,
-        "name_disagreement": 46,
-        "invalid_dates_or_expired": 18
-      },
-      "by_source": {
-        "mobile": {
-          "total": 212,
-          "accept": 112,
-          "wrong": 0
-        },
-        "web": {
-          "total": 305,
-          "accept": 164,
-          "wrong": 2
-        },
-        "mobile_v2": {
-          "total": 47,
-          "accept": 25,
-          "wrong": 0
-        }
-      }
-    }
-  ],
-  "train": {
-    "total": 3000,
-    "accept": 1645,
-    "correct": 1633,
-    "wrong": 12,
-    "wrong_zones_agree": 12,
-    "reasons": {
-      "accept": 1645,
-      "mrz_unverified": 313,
-      "low_confidence_Birth_place_ru": 331,
-      "invalid_dates_or_expired": 72,
-      "missing_or_incomplete_field": 201,
-      "name_disagreement": 283,
-      "low_confidence_Issue_organization_ru": 84,
-      "replacement_grace_period": 12,
-      "mrz_names_unreadable": 59
-    },
-    "by_source": {
-      "web": {
-        "total": 1639,
-        "accept": 881,
-        "wrong": 8
-      },
-      "mobile": {
-        "total": 1069,
-        "accept": 607,
-        "wrong": 2
-      },
-      "mobile_v2": {
-        "total": 292,
-        "accept": 157,
-        "wrong": 2
+      "forecast": {
+        "expected": 0.53,
+        "interval_90": [
+          0,
+          3
+        ],
+        "probability_zero": 0.53
       }
     }
   },
+  "default_variant": "balanced",
   "threshold_curve": [
     {
       "web_mobile_floor": 0.9,
@@ -276,38 +659,9 @@
       "wrong_zones_agree": 8
     }
   ],
-  "test": {
-    "total": 2000,
-    "accept": 1001,
-    "by_source": {
-      "web": {
-        "total": 890,
-        "accept": 439
-      },
-      "mobile": {
-        "total": 679,
-        "accept": 360
-      },
-      "mobile_v2": {
-        "total": 431,
-        "accept": 202
-      }
-    }
-  },
-  "policies": {
-    "web": {
-      "min_conf": 0.95
-    },
-    "mobile": {
-      "min_conf": 0.95
-    },
-    "mobile_v2": {
-      "min_conf": 0.9999
-    }
-  },
   "names": {
     "trusted": 0.99,
     "doubtful": 0.9
   },
-  "seconds": 14.117
+  "seconds": 17.117
 }

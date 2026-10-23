@@ -1,40 +1,50 @@
 {
   "train_answers.jsonl": {
     "rows": 3000,
-    "accepted": 1645,
-    "wrong_fields": 12,
+    "accepted": 1395,
+    "wrong_fields": 6,
     "invalid_accepted": 0
   },
   "validation_answers.jsonl": {
     "rows": 3000,
-    "accepted": 1512,
-    "wrong_fields": 11,
+    "accepted": 1273,
+    "wrong_fields": 5,
     "invalid_accepted": 0
   },
   "answers.jsonl": {
     "rows": 2000,
-    "accepted": 1001,
+    "accepted": 868,
     "wrong_fields": null,
     "invalid_accepted": null
   },
-  "inference_seconds": 0.8606,
+  "answers_zero.jsonl": {
+    "rows": 2000,
+    "accepted": 306,
+    "wrong_fields": null,
+    "invalid_accepted": null
+  },
+  "inference_seconds": 0.6857,
   "cli_checks": {
     "byte_identical_inference": true,
+    "byte_identical_inference_zero_variant": true,
     "duplicate_atomic_failure": true,
     "bad_json_atomic_failure": true,
     "not_object_atomic_failure": true,
     "inplace_guard": true,
     "inference_without_training_files": true
   },
-  "answers_sha256": "66b5d5f0ef2ef8d929a0de42e3b6790ed6602d19dfba3cf397b370fd57a0fe98",
+  "answers_sha256": {
+    "answers.jsonl": "0c14442721fa93638d49169837b01c7af2a1e1b8b329dff5879cf0c64a30bfa1",
+    "answers_zero.jsonl": "77052688960a2c3a8f60ac458785037a797d6fd23164fd151da78b0b0491608f"
+  },
   "schema_valid_on_all_2000_rows": true,
-  "unit_tests_passed": 34,
+  "unit_tests_passed": 37,
   "source_sha256": {
-    "core.py": "0b1fba0dff937380d5dab4f7c1954835bc2d577e82748c51ea0e7ada7ba2e4ca",
-    "postprocess.py": "2a19b7ede944751f44b48ec7dce7a3db4e53fe34e7f0d73409749b067d740418",
-    "train.py": "3c9d36cc7f824db115c5c505bec3ae8af1d548d7c6dcd8a0aa0e730702b4b991",
-    "tests.py": "33deb7bd51919d14cb421e49e3d32740a96cf40b8b73c0ae87032c4a37a0f1aa",
-    "model.json": "8c3f70d50b861423a096c7b97d250d4eedb6163c1eed8023505f2e0353adb1f1",
+    "core.py": "17ff66ea26959d90030f29a4e236a933983432b1a74ee831782f0117ba09225e",
+    "postprocess.py": "ce1e16da95fe21f2ef7c3c6fd34d0494fa6d7dd4682b841fd9eac8c2b3d65d09",
+    "train.py": "c9b3592330dd65ba89b45753c4c5de8c1165fd72c3807c5e0b7f747a054407c6",
+    "tests.py": "b3f95021326a4bb9b88d78e45730ba1877d385fff51d03129b8a5647e791e5fc",
+    "model.json": "1c818f829877c0a9e059e4d522174e00832476721627d98eec1fc982853a887f",
     "run-isolated.sh": "ebea2ad9856d5dc1fcbc050f881133b4d9d116cc7340c77123563b8dfd9f0124"
   },
   "security_checks": {

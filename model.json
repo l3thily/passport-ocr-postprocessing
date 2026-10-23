@@ -1,14 +1,28 @@
 {
- "schema_version": 2,
- "policies": {
-  "web": {
-   "min_conf": 0.95
+ "schema_version": 3,
+ "default_variant": "balanced",
+ "variants": {
+  "balanced": {
+   "web": {
+    "min_conf": 0.95,
+    "max_saturation": 0.28
+   },
+   "mobile": {
+    "min_conf": 0.95,
+    "max_saturation": 1.0
+   },
+   "mobile_v2": {
+    "min_conf": 0.9999,
+    "max_saturation": 1.0
+   }
   },
-  "mobile": {
-   "min_conf": 0.95
-  },
-  "mobile_v2": {
-   "min_conf": 0.9999
+  "zero": {
+   "web": {
+    "min_conf": 0.95,
+    "max_saturation": 0.28
+   },
+   "mobile": null,
+   "mobile_v2": null
   }
  },
  "names": {

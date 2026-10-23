@@ -319,17 +319,29 @@ def doubted(field,read,other,doubtful):
 def valid_name(value):
     return bool(re.fullmatch('[А-ЯЁ]+([ -][А-ЯЁ]+)*',value))
 
+def saturation(record):
+    """Share of visual-zone characters read with confidence of at least 0.9999."""
+    cs=[c for field in record['viz'].values() if field for l in field['lines'] for c in l['char_conf']]
+    return sum(c>=.9999 for c in cs)/len(cs) if cs else 1.0
+
 class Processor:
-    def __init__(self, root, model=None):
+    """`variant` selects an acceptance policy from model.json; see REPORT.md."""
+    def __init__(self, root, model=None, variant=None):
         self.root=Path(root)
         self.model=model if model is not None else json.loads((self.root/'model.json').read_text())
-        policies=self.model.get('policies',{})
+        variants=self.model.get('variants',{})
+        self.variant=variant or self.model.get('default_variant')
+        policies=variants.get(self.variant,{})
         names=self.model.get('names',{})
-        if self.model.get('schema_version')!=2 or set(policies)!=set(SOURCES):
+        if self.model.get('schema_version')!=3 or set(policies)!=set(SOURCES):
             raise ValueError('model must contain a complete acceptance policy')
-        for value in [p.get('min_conf') for p in policies.values()]+[names.get('trusted'),names.get('doubtful')]:
-            if not finite_number(value) or not 0<=value<=1:
-                raise ValueError('invalid acceptance policy')
+        values=[names.get('trusted'),names.get('doubtful')]
+        for policy in policies.values():
+            # A source without a policy is never accepted.
+            if policy is not None:values+=[policy.get('min_conf'),policy.get('max_saturation')]
+        if not all(finite_number(v) and 0<=v<=1 for v in values):
+            raise ValueError('invalid acceptance policy')
+        self.policies=policies
         self.issuers={code:set(names) for code,names in self.model.get('issuers',{}).items()}
 
     def resolve_names(self,record,fields):
@@ -369,6 +381,8 @@ class Processor:
         if not valid_record(record):return reject('malformed_record')
         source=record.get('source')
         if source not in SOURCES:return reject('unknown_source')
+        policy=self.policies[source]
+        if policy is None:return reject('source_not_accepted')
         viz=record['viz']
         fields={k:normalize_field(k,text(viz.get(k))) for k in FIELDS}
         # Number, dates, code and sex come from the verified MRZ, so only the
@@ -385,13 +399,16 @@ class Processor:
         fields.update(names)
         if not valid_dates(fields) or parse_date(fields['Birth_date'])<anniversary(AS_OF,-120):return reject('invalid_dates_or_expired')
         if replacement_pending(fields):return reject('replacement_grace_period')
-        floor=self.model['policies'][source]['min_conf']
+        floor=policy['min_conf']
         if not fields['Birth_place_ru'] or confidence(viz['Birth_place_ru'])<floor:return reject('low_confidence_Birth_place_ru')
         org=fields['Issue_organization_ru']
         if not org or confidence(viz['Issue_organization_ru'])<floor:
             org=self.known_issuer(fields['Issue_organisation_code'],viz['Issue_organization_ru'])
             if not org:return reject('low_confidence_Issue_organization_ru')
         fields['Issue_organization_ru']=org
+        # Both zones agreeing on a value the truth contradicts happens in
+        # documents whose confidences are nearly all saturated (web, train).
+        if saturation(record)>policy['max_saturation']:return reject('saturated_confidence')
         return {'doc_id':record['doc_id'],'decision':'accept','fields':fields},'accept'
 
 def load_jsonl(path):

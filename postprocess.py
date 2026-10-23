@@ -12,9 +12,10 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input',type=Path)
     parser.add_argument('output',type=Path)
+    parser.add_argument('--variant',choices=['balanced','zero'],help='acceptance policy (default: balanced, see REPORT.md)')
     args=parser.parse_args()
     if args.input.resolve()==args.output.resolve():parser.error('input and output must differ')
-    p=Processor(Path(__file__).resolve().parent)
+    p=Processor(Path(__file__).resolve().parent,variant=args.variant)
     seen=set();accepted=0
     fd,tmp=tempfile.mkstemp(prefix='.answers-',suffix='.jsonl',dir=args.output.resolve().parent)
     try:

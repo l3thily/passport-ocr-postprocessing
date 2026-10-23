@@ -5,6 +5,8 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import collections
 import hashlib
 import json
+import math
+import random
 import time
 from core import FIELDS, NAMES, SOURCES, Processor, confidence, load_jsonl, norm, valid_dates
 
@@ -14,7 +16,19 @@ ROOT=Path(__file__).resolve().parent
 # above 0.93, while about 4000 readings at 0.95 or more are all correct.
 # mobile_v2 confidences are saturated: its wrong readings still reach 0.9996,
 # so only practically perfect confidence is trusted there.
-POLICIES={'web':{'min_conf':.95},'mobile':{'min_conf':.95},'mobile_v2':{'min_conf':.9999}}
+FLOORS={'web':.95,'mobile':.95,'mobile_v2':.9999}
+# On train, 6 of the 7 web documents where both zones confidently agree on a
+# value the label contradicts have more than 28% of characters at 0.9999 or
+# above; mobile and mobile_v2 show no such pattern. This was found after
+# looking at the errors, so it is an operating choice, not a validated rule.
+WEB_MAX_SATURATION=.28
+VARIANTS={
+    # Accept everything the checks support, except saturated web documents.
+    'balanced':{s:{'min_conf':FLOORS[s],'max_saturation':WEB_MAX_SATURATION if s=='web' else 1.0} for s in SOURCES},
+    # Only the pool with the lowest observed error rate: unsaturated web.
+    'zero':{'web':{'min_conf':FLOORS['web'],'max_saturation':WEB_MAX_SATURATION},'mobile':None,'mobile_v2':None},
+}
+DEFAULT_VARIANT='balanced'
 # A name zone at or above `trusted` may overrule the other zone only where the
 # latter reads below `doubtful`.
 NAME_POLICY={'trusted':.99,'doubtful':.9}
@@ -22,11 +36,28 @@ CURVE=[.9,.93,.95,.96,.97,.98,.99]
 
 def bucket(doc_id):return int(hashlib.sha256(doc_id.encode()).hexdigest()[:8],16)%5
 
-def make_model(labels,policies=POLICIES):
+def make_model(labels,variants=VARIANTS):
     issuers=collections.defaultdict(set)
     for g in labels:issuers[g['Issue_organisation_code']].add(norm(g['Issue_organization_ru']))
-    return {'schema_version':2,'policies':policies,'names':NAME_POLICY,
+    return {'schema_version':3,'default_variant':DEFAULT_VARIANT,'variants':variants,'names':NAME_POLICY,
             'issuers':{k:sorted(v) for k,v in sorted(issuers.items())}}
+
+def forecast(cv,test_by_source,draws=100000):
+    """Expected wrong acceptances on test from per-source CV error rates, and a
+    predictive interval that also accounts for the uncertainty of the rates."""
+    rnd=random.Random(0);rows=[]
+    used=[s for s in SOURCES if test_by_source[s]['accept']]
+    for s in used:
+        if not cv[s]['accept']:raise ValueError('no validation evidence for '+s)
+    expected=sum(test_by_source[s]['accept']*cv[s]['wrong']/cv[s]['accept'] for s in used)
+    for _ in range(draws):
+        lam=sum(test_by_source[s]['accept']*rnd.gammavariate(cv[s]['wrong']+.5,1/cv[s]['accept']) for s in used)
+        k,limit,prod=0,math.exp(-lam),rnd.random()
+        while prod>limit:k+=1;prod*=rnd.random()
+        rows.append(k)
+    rows.sort()
+    return {'expected':round(expected,2),'interval_90':[rows[int(.05*draws)],rows[int(.95*draws)]],
+            'probability_zero':round(rows.count(0)/draws,2)}
 
 def evaluate(records,labels,p,log=True):
     result={'total':len(records),'accept':0,'correct':0,'wrong':0,'wrong_zones_agree':0,
@@ -47,44 +78,56 @@ def evaluate(records,labels,p,log=True):
     result['reasons']=dict(result['reasons'])
     return result
 
-def cross_validate(records,labels,policies=POLICIES,log=True):
+def cross_validate(records,labels,variant,variants=VARIANTS,log=True):
     folds=[];answers={}
     for fold in range(5):
         training=[labels[r['doc_id']] for r in records if bucket(r['doc_id'])!=fold]
         heldout=[r for r in records if bucket(r['doc_id'])==fold]
-        processor=Processor(ROOT,make_model(training,policies))
+        processor=Processor(ROOT,make_model(training,variants),variant)
         folds.append(evaluate(heldout,labels,processor,log))
         for record in heldout:answers[record['doc_id']]=processor.process(record)[0]
     summary={'accept':sum(f['accept'] for f in folds),'wrong':sum(f['wrong'] for f in folds),
              'wrong_zones_agree':sum(f['wrong_zones_agree'] for f in folds),
+             'reasons':dict(sum((collections.Counter(f['reasons']) for f in folds),collections.Counter())),
              'by_source':{s:{k:sum(f['by_source'][s][k] for f in folds) for k in ['total','accept','wrong']} for s in SOURCES}}
     return summary,folds,answers
+
+def answer_file(variant):
+    return 'answers.jsonl' if variant==DEFAULT_VARIANT else f'answers_{variant}.jsonl'
 
 def main():
     start=time.perf_counter()
     records=list(load_jsonl(ROOT/'data/train_predictions.jsonl'))
     labels={r['doc_id']:r['fields'] for r in load_jsonl(ROOT/'data/train_labels.jsonl')}
-    cv,folds,validation_answers=cross_validate(records,labels)
-    (ROOT/'validation_answers.jsonl').write_text(''.join(json.dumps(validation_answers[r['doc_id']],ensure_ascii=False)+'\n' for r in records))
-    curve=[]
-    for floor in CURVE:
-        policies={s:({'min_conf':floor} if s!='mobile_v2' else POLICIES[s]) for s in SOURCES}
-        summary=cross_validate(records,labels,policies,log=False)[0]
-        curve.append({'web_mobile_floor':floor,**{k:summary[k] for k in ['accept','wrong','wrong_zones_agree']}})
+    test=list(load_jsonl(ROOT/'data/test_predictions.jsonl'))
     model=make_model(labels.values())
     (ROOT/'model.json').write_text(json.dumps(model,ensure_ascii=False,indent=1)+'\n')
-    p=Processor(ROOT)
-    train_metrics=evaluate(records,labels,p,log=False)
-    (ROOT/'train_answers.jsonl').write_text(''.join(json.dumps(p.process(r)[0],ensure_ascii=False)+'\n' for r in records))
-    test=list(load_jsonl(ROOT/'data/test_predictions.jsonl'))
-    answers=[p.process(r)[0] for r in test]
-    (ROOT/'answers.jsonl').write_text(''.join(json.dumps(a,ensure_ascii=False)+'\n' for a in answers))
-    test_metrics={'total':len(test),'accept':sum(a['decision']=='accept' for a in answers),
-                  'by_source':{s:{'total':sum(r['source']==s for r in test),
-                                 'accept':sum(r['source']==s and a['decision']=='accept' for r,a in zip(test,answers))} for s in SOURCES}}
-    details={'cross_validation':cv,'folds':folds,'train':train_metrics,'threshold_curve':curve,'test':test_metrics,
-             'policies':POLICIES,'names':NAME_POLICY,'seconds':round(time.perf_counter()-start,3)}
+    details={'variants':{},'default_variant':DEFAULT_VARIANT}
+    for variant in VARIANTS:
+        cv,folds,validation=cross_validate(records,labels,variant,log=variant==DEFAULT_VARIANT)
+        p=Processor(ROOT,variant=variant)
+        answers=[p.process(r)[0] for r in test]
+        (ROOT/answer_file(variant)).write_text(''.join(json.dumps(a,ensure_ascii=False)+'\n' for a in answers))
+        test_metrics={'total':len(test),'accept':sum(a['decision']=='accept' for a in answers),
+                      'reasons':dict(collections.Counter(p.process(r)[1] for r in test)),
+                      'by_source':{s:{'total':sum(r['source']==s for r in test),
+                                     'accept':sum(r['source']==s and a['decision']=='accept' for r,a in zip(test,answers))} for s in SOURCES}}
+        details['variants'][variant]={'answers':answer_file(variant),'policy':VARIANTS[variant],'cross_validation':cv,'folds':folds,
+                                      'train_in_sample':evaluate(records,labels,p,log=False),'test':test_metrics,
+                                      'forecast':forecast(cv['by_source'],test_metrics['by_source'])}
+        if variant==DEFAULT_VARIANT:
+            (ROOT/'validation_answers.jsonl').write_text(''.join(json.dumps(validation[r['doc_id']],ensure_ascii=False)+'\n' for r in records))
+            (ROOT/'train_answers.jsonl').write_text(''.join(json.dumps(p.process(r)[0],ensure_ascii=False)+'\n' for r in records))
+    # Confidence floor for birth place and issuer (web and mobile), without
+    # the saturation filter, to show where real OCR errors begin.
+    curve=[]
+    for floor in CURVE:
+        variants={'curve':{s:{'min_conf':floor if s!='mobile_v2' else FLOORS[s],'max_saturation':1.0} for s in SOURCES}}
+        summary=cross_validate(records,labels,'curve',variants,log=False)[0]
+        curve.append({'web_mobile_floor':floor,**{k:summary[k] for k in ['accept','wrong','wrong_zones_agree']}})
+    details.update({'threshold_curve':curve,'names':NAME_POLICY,'seconds':round(time.perf_counter()-start,3)})
     (ROOT/'metrics.json').write_text(json.dumps(details,ensure_ascii=False,indent=2)+'\n')
-    print('FINAL',json.dumps({k:details[k] for k in ['cross_validation','threshold_curve','test']},ensure_ascii=False))
+    print('FINAL',json.dumps({v:{k:d[k] for k in ['test','forecast']}|{'cv':{k:d['cross_validation'][k] for k in ['accept','wrong','by_source']}}
+                               for v,d in details['variants'].items()},ensure_ascii=False))
 
 if __name__=='__main__':main()

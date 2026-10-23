@@ -103,8 +103,9 @@ class Rules(unittest.TestCase):
         self.assertTrue(valid_dates(f));self.assertTrue(replacement_pending(f))
         self.assertFalse(replacement_pending({'Birth_date':'10.07.2006','Issue_date':'11.07.2026'}))
 
-    def model(self,**changes):
-        m={'schema_version':2,'policies':{s:{'min_conf':.95} for s in SOURCES},'names':{'trusted':.99,'doubtful':.9},'issuers':{}}
+    def model(self,policies=None,**changes):
+        policies=policies or {s:{'min_conf':.95,'max_saturation':1.0} for s in SOURCES}
+        m={'schema_version':3,'default_variant':'test','variants':{'test':policies},'names':{'trusted':.99,'doubtful':.9},'issuers':{}}
         m.update(changes);return m
 
     def test_missing_rows(self):
@@ -186,12 +187,28 @@ class Rules(unittest.TestCase):
 
     def test_incomplete_model_fails_closed(self):
         with tempfile.TemporaryDirectory(dir='.') as tmp:
-            Path(tmp,'model.json').write_text('{"schema_version":2}')
+            Path(tmp,'model.json').write_text('{"schema_version":3}')
             with self.assertRaises(ValueError):Processor(tmp)
 
     def test_invalid_model_probability_fails_closed(self):
         with self.assertRaises(ValueError):
-            Processor('.',self.model(policies={s:{'min_conf':float('nan')} for s in SOURCES}))
+            Processor('.',self.model(policies={s:{'min_conf':float('nan'),'max_saturation':1.0} for s in SOURCES}))
+        with self.assertRaises(ValueError):Processor('.',variant='no_such_variant')
+
+    def test_saturated_web_document_is_rejected_by_default(self):
+        r=self.fixture();r['source']='web'
+        for field in r['viz'].values():
+            for line in field['lines']:line['char_conf']=[1.0]*len(line['text'])
+        self.assertGreater(saturation(r),.28)
+        self.assertEqual(Processor('.').process(r)[1],'saturated_confidence')
+        r['source']='mobile'
+        self.assertEqual(Processor('.').process(r)[1],'accept')
+
+    def test_zero_variant_accepts_only_web(self):
+        r=self.fixture()
+        self.assertEqual(Processor('.',variant='zero').process(r)[1],'source_not_accepted')
+        r['source']='web'
+        self.assertEqual(Processor('.',variant='zero').process(r)[1],'accept')
 
 class RealData(unittest.TestCase):
     """Regression and perturbation tests on real train documents."""
@@ -266,25 +283,33 @@ class SubmittedAnswers(unittest.TestCase):
     def test_accepted_answers_are_backed_by_evidence(self):
         model=json.loads(Path('model.json').read_text())
         records={r['doc_id']:r for r in load_jsonl('data/test_predictions.jsonl')}
-        answers=list(load_jsonl('answers.jsonl'))
-        self.assertEqual([a['doc_id'] for a in answers],list(records))
-        for a in answers:
-            if a['decision']!='accept':continue
-            r,f=records[a['doc_id']],a['fields']
-            with self.subTest(doc_id=a['doc_id']):
-                self.assertTrue(valid_dates(f));self.assertFalse(replacement_pending(f))
-                # The answer reproduces the MRZ segment check digits and at
-                # least two of its three data segments verbatim; the composite
-                # digit may differ only when all data agrees.
-                mine,mrz=line2(f),r['mrz']['lines'][1]['text']
-                self.assertEqual([mine[d] for _,d in MRZ_SEGMENTS],[mrz[d] for _,d in MRZ_SEGMENTS])
-                same=sum(mine[s]==mrz[s] for s,_ in MRZ_SEGMENTS)
-                self.assertGreaterEqual(same,2)
-                self.assertTrue(mine[43]==mrz[43] or same==3)
-                floor=model['policies'][r['source']]['min_conf']
-                self.assertGreaterEqual(confidence(r['viz']['Birth_place_ru']),floor)
-                self.assertEqual(f['Birth_place_ru'],text(r['viz']['Birth_place_ru']))
-                org=r['viz']['Issue_organization_ru']
-                self.assertTrue(confidence(org)>=floor or f['Issue_organization_ru'] in model['issuers'][f['Issue_organisation_code']])
+        for variant,name in [('balanced','answers.jsonl'),('zero','answers_zero.jsonl')]:
+            answers=list(load_jsonl(name))
+            self.assertEqual([a['doc_id'] for a in answers],list(records))
+            for a in answers:
+                if a['decision']!='accept':continue
+                r,f=records[a['doc_id']],a['fields']
+                policy=model['variants'][variant][r['source']]
+                with self.subTest(variant=variant,doc_id=a['doc_id']):
+                    self.assertIsNotNone(policy)
+                    self.assertTrue(valid_dates(f));self.assertFalse(replacement_pending(f))
+                    # The answer reproduces the MRZ segment check digits and at
+                    # least two of its three data segments verbatim; the
+                    # composite digit may differ only when all data agrees.
+                    mine,mrz=line2(f),r['mrz']['lines'][1]['text']
+                    self.assertEqual([mine[d] for _,d in MRZ_SEGMENTS],[mrz[d] for _,d in MRZ_SEGMENTS])
+                    same=sum(mine[s]==mrz[s] for s,_ in MRZ_SEGMENTS)
+                    self.assertGreaterEqual(same,2)
+                    self.assertTrue(mine[43]==mrz[43] or same==3)
+                    self.assertLessEqual(saturation(r),policy['max_saturation'])
+                    self.assertGreaterEqual(confidence(r['viz']['Birth_place_ru']),policy['min_conf'])
+                    self.assertEqual(f['Birth_place_ru'],text(r['viz']['Birth_place_ru']))
+                    org=r['viz']['Issue_organization_ru']
+                    self.assertTrue(confidence(org)>=policy['min_conf'] or f['Issue_organization_ru'] in model['issuers'][f['Issue_organisation_code']])
+
+    def test_zero_variant_is_a_subset_of_balanced(self):
+        balanced={a['doc_id']:a for a in load_jsonl('answers.jsonl')}
+        for a in load_jsonl('answers_zero.jsonl'):
+            if a['decision']=='accept':self.assertEqual(balanced[a['doc_id']],a)
 
 if __name__=='__main__':unittest.main()

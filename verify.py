@@ -56,8 +56,8 @@ def check_output(predictions,answers,labels=None):
     return {'rows':len(answers),'accepted':accepted,'wrong_fields':wrong if labels is not None else None,
             'invalid_accepted':invalid if labels is not None else None}
 
-def run_cli(source,output,cwd=ROOT,script=None):
-    return subprocess.run([sys.executable,'-I','-S',str(script or ROOT/'postprocess.py'),str(source),str(output)],
+def run_cli(source,output,cwd=ROOT,script=None,extra=()):
+    return subprocess.run([sys.executable,'-I','-S',str(script or ROOT/'postprocess.py'),str(source),str(output),*extra],
                           cwd=cwd,capture_output=True,text=True)
 
 def main():
@@ -68,16 +68,20 @@ def main():
     assert unit_result.wasSuccessful(),stream.getvalue()
     train=read(ROOT/'data/train_predictions.jsonl');test=read(ROOT/'data/test_predictions.jsonl')
     labels={r['doc_id']:r for r in read(ROOT/'data/train_labels.jsonl')}
-    for name,rs,label_map in [('train_answers.jsonl',train,labels),('validation_answers.jsonl',train,labels),('answers.jsonl',test,None)]:
+    for name,rs,label_map in [('train_answers.jsonl',train,labels),('validation_answers.jsonl',train,labels),
+                              ('answers.jsonl',test,None),('answers_zero.jsonl',test,None)]:
         results[name]=check_output(rs,read(ROOT/name),label_map)
     metrics=json.loads((ROOT/'metrics.json').read_text())
-    assert results['train_answers.jsonl']['accepted']==metrics['train']['accept']
-    assert results['validation_answers.jsonl']['accepted']==sum(f['accept'] for f in metrics['folds'])
-    assert results['answers.jsonl']['accepted']==metrics['test']['accept']
+    default=metrics['variants'][metrics['default_variant']]
+    assert default['answers']=='answers.jsonl' and metrics['variants']['zero']['answers']=='answers_zero.jsonl'
+    assert results['train_answers.jsonl']['accepted']==default['train_in_sample']['accept']
+    assert results['validation_answers.jsonl']['accepted']==default['cross_validation']['accept']
+    for variant in metrics['variants'].values():
+        assert results[variant['answers']]['accepted']==variant['test']['accept']
     # Label-contradicting acceptances are expected (see REPORT.md); they must
     # match what train.py reported, and no accepted passport may be invalid.
-    assert results['train_answers.jsonl']['wrong_fields']==metrics['train']['wrong']
-    assert results['validation_answers.jsonl']['wrong_fields']==metrics['cross_validation']['wrong']
+    assert results['train_answers.jsonl']['wrong_fields']==default['train_in_sample']['wrong']
+    assert results['validation_answers.jsonl']['wrong_fields']==default['cross_validation']['wrong']
     assert results['train_answers.jsonl']['invalid_accepted']==results['validation_answers.jsonl']['invalid_accepted']==0
     checks={}
     (ROOT/'.tmp').mkdir(exist_ok=True)
@@ -89,6 +93,10 @@ def main():
         results['inference_seconds']=round(time.perf_counter()-start,4)
         assert (temp/'answers.jsonl').read_bytes()==(ROOT/'answers.jsonl').read_bytes()
         checks['byte_identical_inference']=True
+        child=run_cli(ROOT/'data/test_predictions.jsonl',temp/'answers_zero.jsonl',extra=['--variant','zero'])
+        assert child.returncode==0,child.stderr
+        assert (temp/'answers_zero.jsonl').read_bytes()==(ROOT/'answers_zero.jsonl').read_bytes()
+        checks['byte_identical_inference_zero_variant']=True
         item=json.dumps(test[0],ensure_ascii=False)+'\n'
         for name,payload in [('duplicate',item+item),('bad_json','{broken}\n'),('not_object','[]\n')]:
             inp=temp/(name+'.jsonl');inp.write_text(payload)
@@ -113,7 +121,7 @@ def main():
         assert (runtime/'output.jsonl').read_bytes()==(ROOT/'answers.jsonl').read_bytes()
         checks['inference_without_training_files']=True
     results['cli_checks']=checks
-    results['answers_sha256']=hashlib.sha256((ROOT/'answers.jsonl').read_bytes()).hexdigest()
+    results['answers_sha256']={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in ['answers.jsonl','answers_zero.jsonl']}
     results['schema_valid_on_all_2000_rows']=True
     results['unit_tests_passed']=unit_result.testsRun
     results['source_sha256']={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
