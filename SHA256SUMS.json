@@ -1,7 +1,7 @@
 {
   ".gitignore": "9230f1ecddc2cff0671faf860f1fadfc5adae4c677db7a80d0cb2ec12b5cc017",
   "ISOLATION.md": "cbaa94748c217d63bc2a771677cc9cd495c1d63f42e0a5230e0900d3eb1e6f76",
-  "README.md": "e85418e626f8d361b60e105a8fba403e5988c5843d466f9d405f8016f0553af1",
+  "README.md": "a6f720ac58a649577d7a700a885f088ce57e1650b600f48592a97630c5338a6b",
   "REPORT.md": "9acd56ed970bd59b1ab46395d5025b77b6a82406d94df7e6be6a31615f3a0c66",
   "TASK.md": "9c709dd110b1d2f851390c2c62064fa36c6633001703f0b9eefedac52f504f8b",
   "answers.jsonl": "0c14442721fa93638d49169837b01c7af2a1e1b8b329dff5879cf0c64a30bfa1",
@@ -26,6 +26,8 @@
   "reference/SOURCE.txt": "328457621c1d2b6cef3eb5fae4b4257519b8e16a9543c691febf7b3801ac2aad",
   "reference/subdivisions.csv": "fa7999fab074d824ab89d26cef2ff4576f3cdf1b527eb38df3bc96322709eec4",
   "run-isolated.sh": "ebea2ad9856d5dc1fcbc050f881133b4d9d116cc7340c77123563b8dfd9f0124",
+  "run.bat": "8a44b118a3a14e7cc6e244bcf04f12216c5339061bf2d9d887d4600b80840d8d",
+  "run.command": "c2fe43de370ab5224ed7dbd8463a4877617dd4828386deb5fe09ca914dc897d3",
   "security_checks.json": "a8acaaf1bd50c8f3ac034db13e480788b6ef48e68d863785cca8015bfbbaae27",
   "tests.py": "29df94dec941c92af4e91c821934aee0160faa9899a0bc814ac92642c1767f9d",
   "train.py": "976c7576fbc512ec07d732db2245ba74c20e6f5e5707bcef760d085b65f6d97e",

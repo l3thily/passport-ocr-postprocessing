@@ -21,6 +21,8 @@ python3 postprocess.py data/test_predictions.jsonl answers.jsonl
 python3 postprocess.py data/test_predictions.jsonl answers.jsonl --variant zero   # или balanced, max50
 ```
 
+Без терминала: двойной клик по `run.command` на Mac или `run.bat` на Windows. Файл делает то же, что первая команда, и пишет `answers.jsonl` рядом. macOS при первом запуске скачанного скрипта может его заблокировать: тогда правый клик → «Открыть» → «Открыть».
+
 Инференсу нужны только `core.py`, `postprocess.py`, `model.json` и входной файл. Train и его разметку он не читает.
 
 ## Воспроизведение
